@@ -18,7 +18,7 @@ Read about it online.
 import os
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from flask import Flask, request, render_template, g, redirect, Response
+from flask import Flask, request, render_template, g, redirect, Response, session
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
@@ -121,6 +121,8 @@ def teardown_request(exception):
 #
 @app.route('/')
 def index():
+  if 'email' in session:
+      print('logged in as {}'.format(session['email']))
   """
   request is a special object that Flask provides to access web request information:
 
@@ -201,11 +203,12 @@ def add():
   g.conn.execute(text(cmd), name1 = name, name2 = name);
   return redirect('/')
 
-
+"""
 @app.route('/login')
 def login():
     abort(401)
     this_is_never_executed()
+"""
 
 
 @app.route('/users')
@@ -221,6 +224,36 @@ def show_users():
     context = dict(data = users)
 
     return render_template("user_list.html", **context)
+
+@app.route('/login_page')
+def show_login_page():
+    return render_template('login_page.html')
+
+@app.route('/login', methods=['GET', 'POST'])
+def login():
+    if 'email' in session:
+        print('Already logged in as {}'.format(session['email']))
+
+    elif request.method == 'POST':
+        email = request.form['email']
+        password = request.form['password']
+        cursor = g.conn.execute("SELECT EXISTS(SELECT 1 FROM users WHERE email=%s and password=%s);", (email, password))
+
+        is_exists = list(cursor)[0][0]
+        if is_exists:
+            session['email'] = email
+
+
+    else:
+        pass
+    return redirect('/')
+
+
+@app.route('/logout')
+def logout():
+    session.pop('email', None)
+    return redirect('/')
+
 
 
 if __name__ == "__main__":
@@ -248,5 +281,5 @@ if __name__ == "__main__":
     print "running on %s:%d" % (HOST, PORT)
     app.run(host=HOST, port=PORT, debug=debug, threaded=threaded)
 
-
+  app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
   run()
