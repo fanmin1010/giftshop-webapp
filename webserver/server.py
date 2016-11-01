@@ -208,6 +208,19 @@ def login():
     this_is_never_executed()
 
 
+@app.route('/users')
+def show_users():
+    cursor = g.conn.execute("SELECT uid, name, email FROM users")
+    users = []
+    for result in cursor:
+        dict_user = {'uid': result['uid'], 'name': result['name'], 'email': result['email']}
+        users.append(dict_user)
+    cursor.close()
+    print(users)
+    return redirect('/')
+
+
+
 if __name__ == "__main__":
   import click
 
