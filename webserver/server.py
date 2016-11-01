@@ -20,6 +20,8 @@ from sqlalchemy import *
 from sqlalchemy.pool import NullPool
 from flask import Flask, request, render_template, g, redirect, Response
 
+from database_query import Database
+
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
 
@@ -38,13 +40,18 @@ app = Flask(__name__, template_folder=tmpl_dir)
 #     DATABASEURI = "postgresql://ewu2493:foobar@<IP_OF_POSTGRE_SQL_SERVER>/postgres"
 #
 # Swap out the URI below with the URI for the database created in part 2
-DATABASEURI = "sqlite:///test.db"
+with open('secret.txt', 'r') as fp:
+    secret = fp.read().strip()
 
 
+db = Database('mc4235', secret, '104.196.175.120', 'postgres')
+
+
+
+db.engine_connect(g.conn)
 #
 # This line creates a database engine that knows how to connect to the URI above
 #
-engine = create_engine(DATABASEURI)
 
 
 #
@@ -62,12 +69,9 @@ engine = create_engine(DATABASEURI)
 # 
 # The setup code should be deleted once you switch to using the Part 2 postgresql database
 #
-engine.execute("""DROP TABLE IF EXISTS test;""")
-engine.execute("""CREATE TABLE IF NOT EXISTS test (
-  id serial,
-  name text
-);""")
-engine.execute("""INSERT INTO test(name) VALUES ('grace hopper'), ('alan turing'), ('ada lovelace');""")
+
+
+# engine.execute("""INSERT INTO test(name) VALUES ('grace hopper'), ('alan turing'), ('ada lovelace');""")
 #
 # END SQLITE SETUP CODE
 #
@@ -84,7 +88,8 @@ def before_request():
   The variable g is globally accessible
   """
   try:
-    g.conn = engine.connect()
+    db.engine_connect(g.conn)
+    # g.conn = engine.connect()
   except:
     print "uh oh, problem connecting to database"
     import traceback; traceback.print_exc()
@@ -97,7 +102,8 @@ def teardown_request(exception):
   If you don't the database could run out of memory!
   """
   try:
-    g.conn.close()
+    db.engine_close()
+    # g.conn.close()
   except Exception as e:
     pass
 
@@ -134,11 +140,14 @@ def index():
   #
   # example of a database query
   #
+  """
   cursor = g.conn.execute("SELECT name FROM test")
   names = []
   for result in cursor:
     names.append(result['name'])  # can also be accessed using result[0]
   cursor.close()
+  """
+  names = db.get_list_of_names()
 
   #
   # Flask uses Jinja templates, which is an extension to HTML where you can
@@ -192,9 +201,7 @@ def another():
 @app.route('/add', methods=['POST'])
 def add():
   name = request.form['name']
-  print name
-  cmd = 'INSERT INTO test(name) VALUES (:name1), (:name2)';
-  g.conn.execute(text(cmd), name1 = name, name2 = name);
+  db.add_name(name)
   return redirect('/')
 
 
