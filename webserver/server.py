@@ -217,8 +217,10 @@ def show_users():
         users.append(dict_user)
     cursor.close()
     print(users)
-    return redirect('/')
 
+    context = dict(data = users)
+
+    return render_template("user_list.html", **context)
 
 
 if __name__ == "__main__":
