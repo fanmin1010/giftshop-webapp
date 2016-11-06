@@ -121,8 +121,14 @@ def teardown_request(exception):
 #
 @app.route('/')
 def index():
-  if 'email' in session:
-      print('logged in as {}'.format(session['email']))
+
+  login_name = None
+  if 'uid' in session:
+      cursor = g.conn.execute('select name from users where uid=%s', (session['uid'],))
+      name = list(cursor)[0][0]
+      print('logged in as {} {}'.format(session['uid'], name))
+      login_name = name
+
   """
   request is a special object that Flask provides to access web request information:
 
@@ -172,7 +178,7 @@ def index():
   #     <div>{{n}}</div>
   #     {% endfor %}
   #
-  context = dict(data = names)
+  context = dict(data = names, login_name=login_name)
 
 
   #
@@ -241,7 +247,8 @@ def login():
 
         is_exists = list(cursor)[0][0]
         if is_exists:
-            session['email'] = email
+            cursor = g.conn.execute("SELECT uid FROM users WHERE email=%s;", email)
+            session['uid'] = list(cursor)[0][0]
 
 
     else:
@@ -251,7 +258,7 @@ def login():
 
 @app.route('/logout')
 def logout():
-    session.pop('email', None)
+    session.pop('uid', None)
     return redirect('/')
 
 
