@@ -1,0 +1,14 @@
+{% extends "layout_template.html" %}
+<html>
+    <body>
+        {% block top_body %}
+        {{ super() }}
+        <h2>Gift Catelogue</h2> 
+        {% for pds in product_list %}
+        <div><a href="/product/{{ pds.pid }}">><b>{{ pds.name }}</b></a> - {{ pds.description }}</div>
+        {% endfor %}
+
+        {% endblock %}
+    </body>
+
+</html>

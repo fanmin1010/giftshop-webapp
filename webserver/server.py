@@ -264,6 +264,19 @@ def logout():
     session.pop('uid', None)
     return redirect('/')
 
+@app.route('/product')
+def product():
+    cursor = g.conn.execute('SELECT * FROM product;')
+    result = cursor.fetchall()
+
+    num_prod = len(result)
+
+    context = dict(product_list = result, num_products = num_prod)
+    return render_template('product.html', **context)
+
+
+
+
 
 @app.route('/product/<pid>')
 def product_page(pid):
