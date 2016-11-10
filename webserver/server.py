@@ -265,6 +265,20 @@ def logout():
     return redirect('/')
 
 
+@app.route('/product/<pid>')
+def product_page(pid):
+    cursor = g.conn.execute('SELECT * FROM product WHERE pid=%s;', (pid,))
+    result = cursor.fetchone()
+    if result is None:
+        print('Product for pid {} does not exist'.format(pid))
+        return redirect('/')
+
+    context = dict(product_name = result['name'], product_price = result['price'], product_description = result['description'],
+                    product_rating = result['rating'], product_quantity = result['quantity'])
+    return render_template('single_product.html', **context)
+
+
+
 
 if __name__ == "__main__":
   import click
