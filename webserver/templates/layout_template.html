@@ -1,0 +1,23 @@
+<!doctype html>
+<html>
+    <head>
+        {% block head %}
+
+        {% endblock %}
+    </head>
+
+    <body>
+        {% block top_body %}
+
+            {% if login_name %}
+            <div>You are logged in as: {{login_name}}</div>
+            <div><a href="/logout">Logout</a>
+            {% else %}
+            <div>Please <a href="/login_page">login</a>.</div>
+            {% endif %}
+
+
+        <h1>Awesome Gift Shop</h1>
+        {% endblock %}
+    </body>
+</html>
