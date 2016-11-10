@@ -16,6 +16,10 @@
             <div>Please <a href="/login_page">login</a>.</div>
             {% endif %}
 
+            {% if error_msg %}
+                <div>Error: {{error_msg}}</div>
+            {% endif %}
+
 
         <h1>Awesome Gift Shop</h1>
         {% endblock %}

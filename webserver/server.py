@@ -249,6 +249,9 @@ def login():
         if is_exists:
             cursor = g.conn.execute("SELECT uid FROM users WHERE email=%s;", email)
             session['uid'] = list(cursor)[0][0]
+        else:
+            context = dict(error_msg = 'Login credentials do not exist. Please try again.')
+            return render_template("login_page.html", **context)
 
 
     else:
