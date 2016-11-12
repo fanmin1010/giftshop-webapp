@@ -234,6 +234,11 @@ def show_users():
 
 @app.route('/login_page')
 def show_login_page():
+    if 'uid' in session:
+        print('Already logged in as {}'.format(session['uid']))
+        context = dict(error_msg = 'Already logged in!')
+        return render_template('index.html', **context)
+
     return render_template('login_page.html')
 
 @app.route('/login', methods=['GET', 'POST'])
