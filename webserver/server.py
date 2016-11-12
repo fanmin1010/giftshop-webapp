@@ -18,7 +18,8 @@ Read about it online.
 import os
 from sqlalchemy import *
 from sqlalchemy.pool import NullPool
-from flask import Flask, request, render_template, g, redirect, Response, session
+from flask import Flask, request, render_template, g, redirect, Response, session, jsonify
+import json
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
@@ -237,8 +238,12 @@ def show_login_page():
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
-    if 'email' in session:
-        print('Already logged in as {}'.format(session['email']))
+    if 'uid' in session:
+
+        print('Already logged in as {}'.format(session['uid']))
+        context = dict(error_msg = 'Already logged in!')
+        return render_template('index.html', **context)
+        # return jsonify(error_message = "Already logged in"), 403
 
     elif request.method == 'POST':
         email = request.form['email']
