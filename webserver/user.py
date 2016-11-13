@@ -6,9 +6,17 @@ class User(UserMixin):
         self.uid = uid
         self.password = password
 
+        self.shopping_cart = []
+
     def get_auth_token(self):
         data = [str(self.id), self.password]
         return login_serializer.dumps(data)
+
+    def add_to_cart(self, pid):
+        self.shopping_cart.append(pid)
+
+    def clear_shopping_cart(self):
+        self.shopping_cart = []
 
     @staticmethod
     def get(email, password):
