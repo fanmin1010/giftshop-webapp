@@ -46,14 +46,14 @@ def before_request():
 
 @app.teardown_request
 def teardown_request(exception):
-  """
-  At the end of the web request, this makes sure to close the database connection.
-  If you don't the database could run out of memory!
-  """
-  try:
-    g.conn.close()
-  except Exception as e:
-    pass
+    """
+    At the end of the web request, this makes sure to close the database connection.
+    If you don't the database could run out of memory!
+    """
+    try:
+        g.conn.close()
+    except Exception as e:
+        pass
 
 def redirect_url():
     return request.referrer or '/'
@@ -144,10 +144,6 @@ def product():
     context = dict(product_list = result, num_products = num_prod)
     return render_template('product.html', **context)
 
-
-
-
-
 @app.route('/product/<pid>')
 def product_page(pid):
     cursor = g.conn.execute('SELECT * FROM product WHERE pid=%s;', (pid,))
@@ -160,33 +156,29 @@ def product_page(pid):
                     product_rating = result['rating'], product_quantity = result['quantity'])
     return render_template('single_product.html', **context)
 
-
-
-
 if __name__ == "__main__":
-  import click
+    import click
 
-  @click.command()
-  @click.option('--debug', is_flag=True)
-  @click.option('--threaded', is_flag=True)
-  @click.argument('HOST', default='0.0.0.0')
-  @click.argument('PORT', default=8111, type=int)
-  def run(debug, threaded, host, port):
-    """
-    This function handles command line parameters.
-    Run the server using
+    @click.command()
+    @click.option('--debug', is_flag=True)
+    @click.option('--threaded', is_flag=True)
+    @click.argument('HOST', default='0.0.0.0')
+    @click.argument('PORT', default=8111, type=int)
+    def run(debug, threaded, host, port):
+        """
+        This function handles command line parameters.
+        Run the server using
 
-        python server.py
+            python server.py
 
-    Show the help text using
+        Show the help text using
 
-        python server.py --help
+            python server.py --help
 
-    """
+        """
+        HOST, PORT = host, port
+        print "running on %s:%d" % (HOST, PORT)
+        app.run(host=HOST, port=PORT, debug=debug, threaded=threaded)
 
-    HOST, PORT = host, port
-    print "running on %s:%d" % (HOST, PORT)
-    app.run(host=HOST, port=PORT, debug=debug, threaded=threaded)
-
-  app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
-  run()
+    app.secret_key = 'A0Zr98j/3yX R~XHH!jmN]LWX/,?RT'
+    run()
