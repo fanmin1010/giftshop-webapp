@@ -1,22 +1,39 @@
 <!doctype html>
 <html>
-    <head>
-        {% block head %}
-
-        {% endblock %}
-    </head>
+    <style>
+    button {
+        display: inline-block;
+        margin: 0 10px 0 0;
+        padding: 5px 15px;
+        font-size: 24px;
+        font-family: "Bitter",serif;
+        line-height: 1.8;
+        appearance: none;
+        box-shadow: none;
+        border-radius: 0;
+        text-decoration: none;
+    }
+    a {
+        text-decoration: none;
+    }
+    </style>
 
     <body>
         {% block top_body %}
 
             {% if login_name %}
-            <div>You are logged in as: {{login_name}}</div>
-            <div><a href="/logout">Logout</a>
+            <div>Hello, {{login_name}}</div>
+            <div>
+                <button><a href="/logout">Logout</a></button>
+            </div>
             {% else %}
-            <div>Please <a href="/login_page">login</a>.</div>
+            <div>
+                <button><a href="/login_page">Login</a></button>
+                <button><a href="/registration">Register</a></button></div>
             {% endif %}
 
             {% if error_msg %}
+
                 <div>Error: {{error_msg}}</div>
             {% endif %}
 
