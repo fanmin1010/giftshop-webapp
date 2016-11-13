@@ -152,7 +152,7 @@ def product_page(pid):
         print('Product for pid {} does not exist'.format(pid))
         return redirect('/')
 
-    context = dict(product_name = result['name'], product_price = result['price'], product_description = result['description'],
+    context = dict(product_id = pid, product_name = result['name'], product_price = result['price'], product_description = result['description'],
                     product_rating = result['rating'], product_quantity = result['quantity'])
     return render_template('single_product.html', **context)
 
