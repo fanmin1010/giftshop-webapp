@@ -8,6 +8,13 @@ class User(UserMixin):
 
         self.shopping_cart = []
 
+        cursor = g.conn.execute("SELECT name, email, dob FROM users WHERE uid=%s;", (uid,))
+        details = list(cursor)[0]
+
+        self.name = details[0]
+        self.email = details[1]
+        self.dob = details[2]
+
     def get_auth_token(self):
         data = [str(self.id), self.password]
         return login_serializer.dumps(data)
