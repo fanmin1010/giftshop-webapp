@@ -21,11 +21,12 @@
 
 
             Select address from your list:
-            {% for addr in address_list %}
             <select name="recipient_addr_id">
+            {% for addr in address_list %}
                 <option value="{{ addr.add_id }}">{{ addr.name }} - {{ addr.street_info }}</option>
-            </select>
             {% endfor %}
+        </select>
+        </br>
 
             Or input a new address:
 

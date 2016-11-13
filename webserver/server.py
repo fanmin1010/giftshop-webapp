@@ -159,7 +159,16 @@ def product_page(pid):
 
 @app.route('/purchase_product/<pid>')
 def purchase_product(pid):
-    context = dict(product_id = pid)
+    # TODO replace this
+    uid = 1
+    cursor = g.conn.execute('SELECT a.add_id, a.name, a.street_info FROM address a, addressmaintenance am, users u, consumer c  WHERE u.uid=%s and u.uid=c.cid  and c.cid=am.cid and a.add_id=am.add_id;', (uid,))
+
+    result = list(cursor)
+    addr_list = []
+    for addr in result:
+        addr_list.append({'add_id': addr[0], 'name': addr[1], 'street_info': addr[2]})
+
+    context = dict(product_id = pid, address_list = addr_list)
     return render_template('purchase_page.html', **context)
 
 @app.route('/purchase', methods=['POST'])
