@@ -14,10 +14,17 @@
         {{ super() }}
 
         <h1>Make Purchase</h1>
+        <div><b>You are about to purchase:</b></div>
         <div>Product id: {{product_id}}</div>
+        <div>Product name: {{product_name}}</div>
+
+        </br>
 
 
         <form method="POST" action="/purchase">
+
+            <input type="radio" name="select_addr" value="existing_addr" checked>Use existing address</br>
+            <input type="radio" name="select_addr" value="new_addr">Input new address</br>
 
 
             Select address from your list:
