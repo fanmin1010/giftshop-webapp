@@ -156,6 +156,24 @@ def product_page(pid):
                     product_rating = result['rating'], product_quantity = result['quantity'])
     return render_template('single_product.html', **context)
 
+
+@app.route('/purchase_product/<pid>')
+def purchase_product(pid):
+    context = dict(product_id = pid)
+    return render_template('purchase_page.html', **context)
+
+@app.route('/purchase', methods=['POST'])
+def purchase():
+    recipient_name = request.form['recipient_name']
+    recipient_street = request.form['recipient_street']
+    recipient_city = request.form['recipient_city']
+    recipient_state = request.form['recipient_state']
+    recipient_zip = request.form['recipient_zip']
+    print(recipient_city)
+
+    return redirect('/')
+
+
 if __name__ == "__main__":
     import click
 

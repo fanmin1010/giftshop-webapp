@@ -1,0 +1,50 @@
+{% extends "layout_template.html" %}
+<html>
+    <style>
+        body{ 
+            font-size: 15pt;
+            font-family: arial;
+        }
+    </style>
+
+
+    <body>
+
+        {% block top_body %}
+        {{ super() }}
+
+        <h1>Make Purchase</h1>
+        <div>Product id: {{product_id}}</div>
+
+
+        <form method="POST" action="/purchase">
+
+
+            Select address from your list:
+            {% for addr in address_list %}
+            <select>
+                <option value="{{ addr.add_id }}">{{ addr.name }} - {{ addr.street_info }}</option>
+            </select>
+            {% endfor %}
+
+            Or input a new address:
+
+            <p>Recipient name: <input type="text" name="recipient_name"> </br> 
+            Address: 
+            Street: <input type="text" name="recipient_street"> </br>
+            City: <input type="text" name="recipient_city"> </br>
+            State: <input type="text" name="recipient_state"> </br>
+            Zip: <input type="text" name="recipient_zip"> </br>
+
+
+            <input type="submit" value="Make purchase">
+            </p>
+        </form>
+
+
+        {% endblock %}
+
+    </body>
+
+
+</html>
