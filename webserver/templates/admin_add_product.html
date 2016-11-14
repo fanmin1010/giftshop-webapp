@@ -1,0 +1,40 @@
+{% extends "layout_template.html" %}
+<html>
+    <style>
+        body{
+            font-size: 15pt;
+            font-family: arial;
+        }
+    </style>
+
+
+    <body>
+
+        {% block top_body %}
+        {{ super() }}
+
+        <h1>Admin Page - Add Product</h1>
+
+        <form method="POST" action="/admin/add_product">
+            <p>Product Name:  <input type="text" name="name"> </br> 
+            Description: <input type="text" name="description"> </br>
+            Pic Address: <input type="text" name="pic_address"> </br>
+            Quantity: <input type="text" name="quantity"> </br>
+            Price: <input type="text" name="price"> </br>
+            
+            Category:
+            <select name="category">
+                {% for cat in cat_list %}
+                <option value="{{ cat.cat_id }}">{{ cat.name }}</option>
+                {% endfor %}
+            </select>
+            
+            <input type="submit" value="Add Product"></p>
+        </form>
+
+        {% endblock %}
+
+    </body>
+
+
+</html>

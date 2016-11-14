@@ -248,8 +248,57 @@ def admin_page():
     uid = session['uid']
     if not is_admin(uid):
         return redirect('/')
+
     context = dict(a = 1)
     return render_template('admin_page.html', **context)
+
+@app.route('/admin/add_product_page')
+def admin_add_product():
+    if 'uid' not in session:
+        return redirect('/')
+
+    uid = session['uid']
+    if not is_admin(uid):
+        return redirect('/')
+    
+    cursor = g.conn.execute('SELECT cat_id, name, description FROM category;')
+    results = list(cursor)
+    category_list = []
+    for cat in results:
+        category_list.append({'cat_id': cat[0], 'name': cat[1]})
+    
+    context = dict(cat_list = category_list)
+
+    return render_template('admin_add_product.html', **context)
+
+
+@app.route('/admin/add_product', methods=['POST'])
+def add_product():
+    if 'uid' not in session:
+        return redirect('/')
+
+    uid = session['uid']
+    if not is_admin(uid):
+        return redirect('/')
+
+    name = request.form['name']
+    description = request.form['description']
+    quantity = request.form['quantity']
+    price = request.form['price']
+    pic_address = request.form['pic_address']
+    cat_id = request.form['category']
+
+    cursor = g.conn.execute('SELECT max(pid) FROM product;')
+    result = list(cursor)
+    pid = result[0][0] + 1
+
+    cursor = g.conn.execute('INSERT INTO product VALUES (%s, %s, %s, %s, %s, %s, %s);', (pid, price, description, quantity, name, 3,  pic_address))
+    
+    g.conn.execute('INSERT INTO belonging VALUES (%s, %s);', (cat_id, pid))
+
+    g.conn.execute('INSERT INTO productoversee VALUES (%s, %s);', (pid, uid))
+
+    return redirect('/admin')
 
 
 if __name__ == "__main__":
