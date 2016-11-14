@@ -201,10 +201,12 @@ def purchase_product(pid):
     cursor = g.conn.execute('SELECT name FROM product where pid=%s;', (pid))
     result = list(cursor)
     prod_name = result[0][0]
+
     uid = session['uid']
     addr_list = get_addr_list(uid)
 
     context = dict(product_id = pid, product_name = prod_name, address_list = addr_list, login_name = login_name)
+
     return render_template('purchase_page.html', **context)
 
 @app.route('/purchase', methods=['POST'])
@@ -300,6 +302,111 @@ def purchase():
     r_zip = add_data[4]
     context = dict(product_id = pid, product_name = pname, address_list = addr_list, login_name = login_name, r_name = r_name, r_street= r_street, r_city=r_city,r_state=r_state,r_zip=r_zip, bill_info = bill_info)
     return render_template('order_confirm.html', **context)
+
+
+def is_admin(uid):
+    cursor = g.conn.execute("SELECT EXISTS(SELECT 1 FROM administrator a WHERE a.admin_id=%s);", (uid,))
+    result = cursor.fetchone()[0]
+    return result
+
+
+@app.route('/admin')
+def admin_page():
+    if 'uid' not in session:
+        return redirect('/')
+
+    uid = session['uid']
+    if not is_admin(uid):
+        return redirect('/')
+
+    context = dict(a = 1)
+    return render_template('admin_page.html', **context)
+
+@app.route('/admin/add_product_page')
+def admin_add_product():
+    if 'uid' not in session:
+        return redirect('/')
+
+    uid = session['uid']
+    if not is_admin(uid):
+        return redirect('/')
+
+    cursor = g.conn.execute('SELECT cat_id, name, description FROM category;')
+    results = list(cursor)
+    category_list = []
+    for cat in results:
+        category_list.append({'cat_id': cat[0], 'name': cat[1]})
+
+    context = dict(cat_list = category_list)
+
+    return render_template('admin_add_product.html', **context)
+
+
+@app.route('/admin/add_product', methods=['POST'])
+def add_product():
+    if 'uid' not in session:
+        return redirect('/')
+
+    uid = session['uid']
+    if not is_admin(uid):
+        return redirect('/')
+
+    name = request.form['name']
+    description = request.form['description']
+    quantity = request.form['quantity']
+    price = request.form['price']
+    pic_address = request.form['pic_address']
+    cat_id = request.form['category']
+
+    cursor = g.conn.execute('SELECT max(pid) FROM product;')
+    result = list(cursor)
+    pid = result[0][0] + 1
+
+    cursor = g.conn.execute('INSERT INTO product VALUES (%s, %s, %s, %s, %s, %s, %s);', (pid, price, description, quantity, name, 3,  pic_address))
+
+    g.conn.execute('INSERT INTO belonging VALUES (%s, %s);', (cat_id, pid))
+
+    g.conn.execute('INSERT INTO productoversee VALUES (%s, %s);', (pid, uid))
+
+    return redirect('/admin')
+
+@app.route('/admin/remove_product_page')
+def remove_product_page():
+    if 'uid' not in session:
+        return redirect('/')
+
+    uid = session['uid']
+    if not is_admin(uid):
+        return redirect('/')
+
+    cursor = g.conn.execute('SELECT * FROM product;')
+    results = list(cursor)
+
+    product_list = []
+    for prod in results:
+        product_list.append({'pid': prod[0], 'price': prod[1], 'description': prod[2], 'quantity': prod[3], 'name': prod[4], 'rating': prod[5]})
+
+    context = dict(prod_list = product_list)
+
+    return render_template('admin_remove_product.html', **context)
+
+@app.route('/admin/remove_product', methods=['POST'])
+def remove_product():
+    if 'uid' not in session:
+        return redirect('/')
+
+    uid = session['uid']
+    if not is_admin(uid):
+        return redirect('/')
+
+    pid = request.form['pid']
+
+    cursor = g.conn.execute('DELETE FROM belonging WHERE pid=%s;', (pid,))
+    cursor = g.conn.execute('DELETE FROM productoversee WHERE pid=%s;', (pid,))
+    cursor = g.conn.execute('DELETE FROM product WHERE pid=%s;', (pid,))
+
+    return redirect('/admin')
+
 
 
 if __name__ == "__main__":

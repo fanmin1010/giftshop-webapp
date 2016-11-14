@@ -1,0 +1,26 @@
+{% extends "layout_template.html" %}
+<html>
+    <style>
+        body{
+            font-size: 15pt;
+            font-family: arial;
+        }
+    </style>
+
+
+    <body>
+
+        {% block top_body %}
+        {{ super() }}
+
+        <h1>Admin Page</h1>
+
+        <div><a href="/admin/add_product_page">Add product</a></div>
+        <div><a href="/admin/remove_product_page">Remove product</a></div>
+
+        {% endblock %}
+
+    </body>
+
+
+</html>
