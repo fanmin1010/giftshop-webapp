@@ -1,0 +1,31 @@
+{% extends "layout_template.html" %}
+<html>
+    <style>
+        body{
+            font-size: 15pt;
+            font-family: arial;
+        }
+    </style>
+
+    <body>
+        {% block top_body %}
+        {{ super() }}
+        <h1>Congrats: order confirmed!</h1>
+        <h3><b>Purchased:</b></h3>
+        <div>Product id: {{product_id}}</div>
+        <div>Product name: {{product_name}}</div>
+        <div>quantity: 1</div>
+        <br/>
+        <h3>Shipped to:</h3>
+        <div>Receiver: {{r_name}}</div>
+        <div>Address: {{r_street}}</div>
+        <div>City: {{r_city}} State:{{r_state}} Zip: {{r_zip}}</div>
+        <br/>
+        <h3>Billing information</h3>
+        <div>{{bill_info}}</div>
+        </br>
+        <div><a href="/"><button>Main page</button></a></div>
+        
+        {% endblock %}
+    </body>
+</html>

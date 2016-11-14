@@ -20,6 +20,8 @@ from sqlalchemy import *
 from sqlalchemy.pool import NullPool
 from flask import Flask, request, render_template, g, redirect, Response, session, jsonify
 import json
+from random import randint
+import datetime
 
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
@@ -63,13 +65,12 @@ def logged():
     if 'uid' in session:
         cursor = g.conn.execute('select name from users where uid=%s', (session['uid'],))
         name = list(cursor)[0][0]
-        print('logged in as {} {}'.format(session['uid'], name))
     return name
 
 @app.route('/')
 def index():
   login_name = logged()
-  context = dict(data = login_name, login_name = login_name)
+  context = dict(login_name = login_name)
   return render_template("index.html", **context)
 
 @app.route('/registration', methods=['GET'])
@@ -110,7 +111,9 @@ def registered():
     cursor = g.conn.execute("INSERT INTO users(email, name, dob, password) VALUES (%s, %s, %s, %s)", (email, username, dob, password))
     if cursor:
         cursor = g.conn.execute("SELECT uid FROM users WHERE email=%s;", email)
-        session['uid'] = list(cursor)[0][0]
+        uid = list(cursor)[0][0]
+        session['uid'] = uid
+        g.conn.execute("INSERT INTO consumer(cid) VALUES (%s)", (uid))
         return redirect('/')
     else:
         msg = "something is wrong with db"
@@ -134,20 +137,13 @@ def show_users():
 @app.route('/login_page')
 def show_login_page():
     if 'uid' in session:
-        print('Already logged in as {}'.format(session['uid']))
-        context = dict(error_msg = 'Already logged in!')
         return redirect(redirect_url())
-
     return render_template('login_page.html')
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if 'uid' in session:
-        print('Already logged in as {}'.format(session['uid']))
-        context = dict(error_msg = 'Already logged in!')
         return render_template('index.html', **context)
-        # return jsonify(error_message = "Already logged in"), 403
-
     elif request.method == 'POST':
         email = request.form['email']
         password = request.form['password']
@@ -164,7 +160,6 @@ def login():
         pass
     return redirect('/')
 
-
 @app.route('/logout')
 def logout():
     session.pop('uid', None)
@@ -176,62 +171,135 @@ def product():
     cursor = g.conn.execute('SELECT * FROM product;')
     result = cursor.fetchall()
     num_prod = len(result)
-    context = dict(product_list = result, num_products = num_prod, data = login_name, login_name = login_name)
+    context = dict(product_list = result, num_products = num_prod, login_name = login_name)
     return render_template('product.html', **context)
 
 @app.route('/product/<pid>')
 def product_page(pid):
+    login_name = logged()
     cursor = g.conn.execute('SELECT * FROM product WHERE pid=%s;', (pid))
     result = cursor.fetchone()
     if result is None:
         print('Product for pid {} does not exist'.format(pid))
-        return redirect('/')
-
-    context = dict(product_id = pid, product_name = result['name'], product_price = result['price'], product_description = result['description'],
-                    product_rating = result['rating'], product_quantity = result['quantity'])
+        return redirect('/product')
+    context = dict(product_id = pid, product_name = result['name'], product_price = result['price'], product_description = result['description'], product_rating = result['rating'], product_quantity = result['quantity'], login_name = login_name)
     return render_template('single_product.html', **context)
 
-
-@app.route('/purchase_product/<pid>')
-def purchase_product(pid):
-    cursor = g.conn.execute('SELECT name FROM product where pid=%s;', (pid,))
-    result = list(cursor)
-    prod_name = result[0][0]
-
-
-    # TODO replace this
-    uid = 1
-    cursor = g.conn.execute('SELECT a.add_id, a.name, a.street_info FROM address a, addressmaintenance am, users u, consumer c  WHERE u.uid=%s and u.uid=c.cid  and c.cid=am.cid and a.add_id=am.add_id;', (uid,))
-
+def get_addr_list(uid):
+    cursor = g.conn.execute('SELECT a.add_id, a.name, a.street_info FROM address a, addressmaintenance am, users u, consumer c  WHERE u.uid=%s and u.uid=c.cid  and c.cid=am.cid and a.add_id=am.add_id;', (uid))
     result = list(cursor)
     addr_list = []
     for addr in result:
         addr_list.append({'add_id': addr[0], 'name': addr[1], 'street_info': addr[2]})
+    return addr_list
 
-    context = dict(product_id = pid, product_name = prod_name, address_list = addr_list)
+@app.route('/purchase_product/<pid>')
+def purchase_product(pid):
+    if not ('uid' in session):
+        return redirect('/login_page')
+    login_name = logged()
+    cursor = g.conn.execute('SELECT name FROM product where pid=%s;', (pid))
+    result = list(cursor)
+    prod_name = result[0][0]
+    uid = session['uid']
+    addr_list = get_addr_list(uid)
+
+    context = dict(product_id = pid, product_name = prod_name, address_list = addr_list, login_name = login_name)
     return render_template('purchase_page.html', **context)
 
 @app.route('/purchase', methods=['POST'])
 def purchase():
-    use_which_address = request.form['select_addr']
-    if use_which_address == 'existing_addr':
-        add_id = request.form['recipient_addr_id']
-        cursor = g.conn.execute('SELECT name, street_info, city, state, zip FROM address where add_id=%s;', (add_id,))
-        result = list(cursor)[0]
-        recipient_name = result[0]
-        recipient_street = result[1]
-        recipient_city = result[2]
-        recipient_state = result[3]
-        recipient_zip = result[4]
+    print request.form
+    which_address = request.form['select_addr']
+    pid = request.form['pid']
+    pname = request.form['pname']
+    uid = session['uid']
+    addr_list = get_addr_list(uid)
+    login_name = logged()
+    context = dict(product_id = pid, product_name = pname, address_list = addr_list, login_name = login_name)
+    chosen = None
+    err = False
+    add_id = '-1'
+    bill_info = ''
 
-    if use_which_address == 'new_addr':
-        recipient_name = request.form['recipient_name']
-        recipient_street = request.form['recipient_street']
-        recipient_city = request.form['recipient_city']
-        recipient_state = request.form['recipient_state']
-        recipient_zip = request.form['recipient_zip']
+    if which_address == 'existing_addr':
+        chosen = request.form['recipient_addr_id']
+    else:
+        r_name = request.form['recipient_name']
+        r_street = request.form['recipient_street']
+        r_city = request.form['recipient_city']
+        r_state = request.form['recipient_state']
+        r_zip = request.form['recipient_zip']
+        if len(r_name) <3 or len(r_name) >40 or len(r_street) < 3 or len(r_state)==0 or len(r_city) > 30 or len(r_city) == 0 or len(r_zip) <4 or len(r_state) > 3 :
+            err = True
+        try:
+            int(r_zip)
+        except (ValueError, TypeError):
+            err = True
 
-    return redirect('/')
+    if chosen == '-1' or err:
+        error_msg = "Sorry invalid address selection!"
+        context['error_msg'] = error_msg
+        return render_template('purchase_page.html', **context)
+    elif len(request.form['cc']) == 0 or len(request.form['cvv']) == 0 or len(request.form['ed']) == 0:
+        error_msg = "Sorry invalid billing info!"
+        context['error_msg'] = error_msg
+        return render_template('purchase_page.html', **context)
+    else:
+        bill_info = bill_info+'Credit Card No.: ' + request.form['cc']+' CVV: ' +request.form['cvv']+' Expiration Date: '+request.form['ed']
+    if which_address == 'new_addr':
+        cmd = 'INSERT INTO address(name, street_info, city, state, zip) VALUES (%s, %s, %s, %s, %s)'
+        add_data = (r_name, r_street, r_city, r_state, r_zip)
+        cursor = g.conn.execute(cmd, add_data)
+        cmd = 'SELECT add_id FROM address WHERE name = %s AND street_info = %s and city= %s and state = %s and zip=%s'
+        cursor = g.conn.execute(cmd, add_data)
+        add_id = list(cursor)[0][0]
+        cursor = g.conn.execute('SELECT 1 FROM addressmaintenance WHERE cid = %s and add_id = %s', (uid, add_id))
+        if len(list(cursor)) == 0:
+            g.conn.execute('INSERT INTO addressmaintenance(cid, add_id) VALUES (%s, %s)', (uid, add_id))
+    if(add_id == '-1'):
+        add_id = chosen
+    try:
+        int(add_id)
+    except (ValueError, TypeError):
+        error_msg = "Sorry your address is not valid!"
+        context['error_msg'] = error_msg
+        return render_template('purchase_page.html', **context)
+
+    cursor = g.conn.execute('SELECT order_id FROM orders ORDER BY order_id DESC ')
+    order_id = 1
+    res = cursor.first()
+    if res != None:
+        try:
+            order_id = int(res[0]) + 1
+        except (ValueError, TypeError):
+            error_msg = "something is wrong!"
+            context['error_msg'] = error_msg
+            return render_template('purchase_page.html', **context)
+    cursor = g.conn.execute('SELECT admin_id FROM administrator ORDER BY admin_id DESC ')
+    admax = int(cursor.first()[0])
+    admini = 11
+    admin_id = randint(admini, admax)
+    cursor = g.conn.execute('SELECT price FROM product WHERE pid = %s', (pid))
+    amount = cursor.first()[0]
+    date = datetime.datetime.now().date()
+    time = datetime.datetime.now().time()
+    print date
+    print time
+    cmd = 'INSERT INTO orders(order_id, billing_info, amount, shipadd_id, cid, admin_id, order_date, order_time) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)'
+    new_order = (order_id, bill_info, amount, add_id, uid, admin_id, date, time)
+    cursor = g.conn.execute(cmd, new_order)
+    cursor = g.conn.execute('INSERT INTO orderContains(order_id, pid, product_quantity) VALUES (%s, %s, %s)', (order_id, pid, 1))
+
+    cursor = g.conn.execute('SELECT name, street_info, city, state, zip FROM address WHERE add_id = %s', (add_id))
+    add_data = cursor.first()
+    r_name = add_data[0]
+    r_street = add_data[1]
+    r_city = add_data[2]
+    r_state = add_data[3]
+    r_zip = add_data[4]
+    context = dict(product_id = pid, product_name = pname, address_list = addr_list, login_name = login_name, r_name = r_name, r_street= r_street, r_city=r_city,r_state=r_state,r_zip=r_zip, bill_info = bill_info)
+    return render_template('order_confirm.html', **context)
 
 
 if __name__ == "__main__":

@@ -1,58 +1,54 @@
 {% extends "layout_template.html" %}
 <html>
     <style>
-        body{ 
+        body{
             font-size: 15pt;
             font-family: arial;
         }
     </style>
 
-
     <body>
-
         {% block top_body %}
         {{ super() }}
-
         <h1>Make Purchase</h1>
         <div><b>You are about to purchase:</b></div>
         <div>Product id: {{product_id}}</div>
         <div>Product name: {{product_name}}</div>
-
         </br>
-
-
         <form method="POST" action="/purchase">
-
             <input type="radio" name="select_addr" value="existing_addr" checked>Use existing address</br>
             <input type="radio" name="select_addr" value="new_addr">Input new address</br>
 
-
             Select address from your list:
             <select name="recipient_addr_id">
-            {% for addr in address_list %}
-                <option value="{{ addr.add_id }}">{{ addr.name }} - {{ addr.street_info }}</option>
-            {% endfor %}
-        </select>
-        </br>
-
+                <option value="-1">Select one</option>
+                {% for addr in address_list %}
+                    </address>
+                    <option value="{{ addr.add_id }}">{{ addr.name }} - {{ addr.street_info }}</option>
+                    {% endfor %}
+                </select>
+            <input type="text" name="pid" value="{{ product_id }}" style="display:none;"/>
+            <input type="text" name="pname" value="{{ product_name }}" style="display:none;"/>
+            </br>
             Or input a new address:
-
-            <p>Recipient name: <input type="text" name="recipient_name"> </br> 
-            Address: 
+            <p>Recipient name: <input type="text" name="recipient_name"> </br>
+            Address:
             Street: <input type="text" name="recipient_street"> </br>
             City: <input type="text" name="recipient_city"> </br>
-            State: <input type="text" name="recipient_state"> </br>
+            State (Abbr.): <input type="text" name="recipient_state"> </br>
             Zip: <input type="text" name="recipient_zip"> </br>
 
-
-            <input type="submit" value="Make purchase">
             </p>
+            <br/>
+            <h4>Billing information</h4>
+            <label for="cc">Credit card number</label>
+            <input type="text" name="cc"><br/>
+            <label for="cvv">CVV</label>
+            <input type="text" name="cvv">
+            <label for="ed">Expiration Date</label>
+            <input type="text" name="ed"><br/>
+            <button type="submit">Make purchase</button>
         </form>
-
-
         {% endblock %}
-
     </body>
-
-
 </html>

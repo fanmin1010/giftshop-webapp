@@ -1,7 +1,7 @@
 <!doctype html>
 <html>
 <head>
-    <title>Learning jQuery</title>
+    <title>Awesome Giftshop</title>
 
     <meta charset="utf-8" />
     <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
@@ -10,7 +10,7 @@
     <style type="text/css">
         button {
             display: inline-block;
-            margin: 0 10px 0 0;
+            margin: 5px 10px 5px 0;
             padding: 5px 25px;
             font-size: 25px;
             font-family: "Bitter",serif;
@@ -66,16 +66,16 @@
 
     <body>
         {% block top_body %}
-
             {% if login_name %}
             <div>Hello, {{login_name}}</div>
             <div>
-                <button><a href="/logout">Logout</a></button>
+                <a href="/logout"><button>Logout</button></a>
             </div>
             {% else %}
             <div>
-                <button><a href="/login_page">Login</a></button>
-                <button><a href="/registration">Register</a></button></div>
+                <a href="/login_page"><button>Login</button></a>
+                <a href="/registration"><button>Register</button></a>
+            </div>
             {% endif %}
 
             {% if error_msg %}
