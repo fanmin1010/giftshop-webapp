@@ -1,22 +1,68 @@
 <!doctype html>
 <html>
-    <style>
-    button {
-        display: inline-block;
-        margin: 0 10px 0 0;
-        padding: 5px 15px;
-        font-size: 24px;
-        font-family: "Bitter",serif;
-        line-height: 1.8;
-        appearance: none;
-        box-shadow: none;
-        border-radius: 0;
-        text-decoration: none;
-    }
-    a {
-        text-decoration: none;
-    }
+<head>
+    <title>Learning jQuery</title>
+
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-type" content="text/html; charset=utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js"></script>
+    <style type="text/css">
+        button {
+            display: inline-block;
+            margin: 0 10px 0 0;
+            padding: 5px 25px;
+            font-size: 25px;
+            font-family: "Bitter",serif;
+            line-height: 1.8;
+            appearance: none;
+            box-shadow: none;
+            border-radius: 5px;
+        }
+        html {
+            margin: 20px 5px;
+        }
+        .formContainer {
+            width: 600px;
+            margin: 0 auto;
+            font-family: helvetica, "sans-serif";
+        }
+        .formItem{
+            height: 45px;
+            margin: 10px auto;
+        }
+        .textInput {
+            height: 30px;
+            width: 300px;
+            padding: 5px;
+            border-radius: 10px;
+            font-size: 18px;
+
+        }
+        .textLabel{
+            width: 160px;
+            float: left;
+            padding-top: 15px;
+        }
+        #submitButton {
+            margin-left: 180px;
+            margin-top: 10px;
+            font-size: 20px;
+            width: 100px;
+            height: 40px;
+            border: 1px solid grey;
+            border-radius: 10px;
+        }
+        #errorMsg {
+            color: red;
+            padding-left: 10px;
+            font-size: 12px;
+            margin: 5px;
+            display: none;
+        }
+
     </style>
+</head>
 
     <body>
         {% block top_body %}
