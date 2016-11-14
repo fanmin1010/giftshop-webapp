@@ -162,10 +162,10 @@ def purchase_product(pid):
     cursor = g.conn.execute('SELECT name FROM product where pid=%s;', (pid,))
     result = list(cursor)
     prod_name = result[0][0]
-
-
-    # TODO replace this
-    uid = 1
+    if 'uid' not in session:
+        print('Not logged in')
+        return redirect('/')
+    uid = session['uid']
     cursor = g.conn.execute('SELECT a.add_id, a.name, a.street_info FROM address a, addressmaintenance am, users u, consumer c  WHERE u.uid=%s and u.uid=c.cid  and c.cid=am.cid and a.add_id=am.add_id;', (uid,))
 
     result = list(cursor)
