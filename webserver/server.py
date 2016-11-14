@@ -234,6 +234,11 @@ def purchase():
     return redirect('/')
 
 
+def is_admin(uid):
+    cursor = g.conn.execute("SELECT EXISTS(SELECT 1 FROM administrator a WHERE a.admin_id=%s);", (uid,))
+    row = cursor.fetchone()
+    return row
+
 if __name__ == "__main__":
     import click
 
