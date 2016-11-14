@@ -24,9 +24,9 @@ import json
 tmpl_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'templates')
 app = Flask(__name__, template_folder=tmpl_dir)
 
-DATABASEURL = "postgresql://mc4235:ku6z3@104.196.175.120/postgres"
+DATABASEURI = "postgresql://mc4235:ku6z3@104.196.175.120/postgres"
 
-engine = create_engine(DATABASEURL)
+engine = create_engine(DATABASEURI)
 
 @app.before_request
 def before_request():
@@ -40,7 +40,7 @@ def before_request():
   try:
     g.conn = engine.connect()
   except:
-    print "uh oh, problem connecting to database"
+    print "uh oh, problem connecting to database\n\n\n\n\n\n"
     import traceback; traceback.print_exc()
     g.conn = None
 
@@ -69,8 +69,8 @@ def index():
       login_name = name
 
   # DEBUG: this is debugging code to see what request looks like
-  print request.args
-  print name
+  # print request.args
+  # print name
   context = dict(data = name, login_name = login_name)
   return render_template("index.html", **context)
 
@@ -79,7 +79,45 @@ def register():
     if 'uid' in session:
         return redirect_url()
     else:
+        return render_template("register.html")
+
+@app.route('/registered', methods=['POST'])
+def registered():
+    email = request.form['email']
+    password = request.form['pass']
+    username = request.form['username']
+    dob = request.form['dob']
+    cursor = g.conn.execute("SELECT 1 FROM users WHERE email = %s", (email));
+    row = cursor.fetchone()
+    msg = "User with email {} has already existed. Please login instead.".format(email)
+    err = False
+    if not row:
+        msg = ""
+    if password == "":
+        msg = msg + "\n Empty password."
+        err = True
+    if email == "":
+        msg = msg + "\n Empty email."
+        err = True
+    if username == "":
+        msg = msg + "\n Empty user name."
+        err = True
+    if len(dob) > 10:
+        msg = msg +"\n invalid birth date."
+        err =True
+    content = dict(error_msg = msg)
+
+    if row or err:
+        return render_template("register.html", **content)
+    cursor = g.conn.execute("INSERT INTO users(email, name, dob, password) VALUES (%s, %s, %s, %s)", (email, username, dob, password))
+    if cursor:
+        cursor = g.conn.execute("SELECT uid FROM users WHERE email=%s;", email)
+        session['uid'] = list(cursor)[0][0]
         return redirect('/')
+    else:
+        msg = "something is wrong with db"
+        content["error_msg"] =  msg
+        return render_template("register.html", **content)
 
 @app.route('/users')
 def show_users():
