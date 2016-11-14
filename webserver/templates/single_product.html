@@ -11,6 +11,13 @@
         <div>Rating: {{product_rating}}/10</div>
         <div>Description: {{product_description}}</div>
 
+
+        <form method="GET" action="/purchase_product/{{product_id}}">
+            <input type="submit" value="Purchase this product"></p>
+        </form>
+
+
+
         {% endblock %}
     </body>
 

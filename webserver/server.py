@@ -190,9 +190,52 @@ def product_page(pid):
         print('Product for pid {} does not exist'.format(pid))
         return redirect('/')
 
-    context = dict(product_name = result['name'], product_price = result['price'], product_description = result['description'],
+    context = dict(product_id = pid, product_name = result['name'], product_price = result['price'], product_description = result['description'],
                     product_rating = result['rating'], product_quantity = result['quantity'])
     return render_template('single_product.html', **context)
+
+
+@app.route('/purchase_product/<pid>')
+def purchase_product(pid):
+    cursor = g.conn.execute('SELECT name FROM product where pid=%s;', (pid,))
+    result = list(cursor)
+    prod_name = result[0][0]
+
+
+    # TODO replace this
+    uid = 1
+    cursor = g.conn.execute('SELECT a.add_id, a.name, a.street_info FROM address a, addressmaintenance am, users u, consumer c  WHERE u.uid=%s and u.uid=c.cid  and c.cid=am.cid and a.add_id=am.add_id;', (uid,))
+
+    result = list(cursor)
+    addr_list = []
+    for addr in result:
+        addr_list.append({'add_id': addr[0], 'name': addr[1], 'street_info': addr[2]})
+
+    context = dict(product_id = pid, product_name = prod_name, address_list = addr_list)
+    return render_template('purchase_page.html', **context)
+
+@app.route('/purchase', methods=['POST'])
+def purchase():
+    use_which_address = request.form['select_addr']
+    if use_which_address == 'existing_addr':
+        add_id = request.form['recipient_addr_id']
+        cursor = g.conn.execute('SELECT name, street_info, city, state, zip FROM address where add_id=%s;', (add_id,))
+        result = list(cursor)[0]
+        recipient_name = result[0]
+        recipient_street = result[1]
+        recipient_city = result[2]
+        recipient_state = result[3]
+        recipient_zip = result[4]
+
+    if use_which_address == 'new_addr':
+        recipient_name = request.form['recipient_name']
+        recipient_street = request.form['recipient_street']
+        recipient_city = request.form['recipient_city']
+        recipient_state = request.form['recipient_state']
+        recipient_zip = request.form['recipient_zip']
+
+    return redirect('/')
+
 
 if __name__ == "__main__":
     import click
