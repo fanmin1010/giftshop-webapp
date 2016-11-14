@@ -236,8 +236,21 @@ def purchase():
 
 def is_admin(uid):
     cursor = g.conn.execute("SELECT EXISTS(SELECT 1 FROM administrator a WHERE a.admin_id=%s);", (uid,))
-    row = cursor.fetchone()
-    return row
+    result = cursor.fetchone()[0]
+    return result
+
+
+@app.route('/admin')
+def admin_page():
+    if 'uid' not in session:
+        return redirect('/')
+
+    uid = session['uid']
+    if not is_admin(uid):
+        return redirect('/')
+    context = dict(a = 1)
+    return render_template('admin_page.html', **context)
+
 
 if __name__ == "__main__":
     import click
