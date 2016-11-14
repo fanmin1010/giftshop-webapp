@@ -58,20 +58,18 @@ def teardown_request(exception):
 def redirect_url():
     return request.referrer or '/'
 
+def logged():
+    name = None
+    if 'uid' in session:
+        cursor = g.conn.execute('select name from users where uid=%s', (session['uid'],))
+        name = list(cursor)[0][0]
+        print('logged in as {} {}'.format(session['uid'], name))
+    return name
+
 @app.route('/')
 def index():
-  login_name = None
-  name = None
-  if 'uid' in session:
-      cursor = g.conn.execute('select name from users where uid=%s', (session['uid'],))
-      name = list(cursor)[0][0]
-      print('logged in as {} {}'.format(session['uid'], name))
-      login_name = name
-
-  # DEBUG: this is debugging code to see what request looks like
-  # print request.args
-  # print name
-  context = dict(data = name, login_name = login_name)
+  login_name = logged()
+  context = dict(data = login_name, login_name = login_name)
   return render_template("index.html", **context)
 
 @app.route('/registration', methods=['GET'])
@@ -174,17 +172,16 @@ def logout():
 
 @app.route('/product')
 def product():
+    login_name = logged()
     cursor = g.conn.execute('SELECT * FROM product;')
     result = cursor.fetchall()
-
     num_prod = len(result)
-
-    context = dict(product_list = result, num_products = num_prod)
+    context = dict(product_list = result, num_products = num_prod, data = login_name, login_name = login_name)
     return render_template('product.html', **context)
 
 @app.route('/product/<pid>')
 def product_page(pid):
-    cursor = g.conn.execute('SELECT * FROM product WHERE pid=%s;', (pid,))
+    cursor = g.conn.execute('SELECT * FROM product WHERE pid=%s;', (pid))
     result = cursor.fetchone()
     if result is None:
         print('Product for pid {} does not exist'.format(pid))
