@@ -300,6 +300,44 @@ def add_product():
 
     return redirect('/admin')
 
+@app.route('/admin/remove_product_page')
+def remove_product_page():
+    if 'uid' not in session:
+        return redirect('/')
+
+    uid = session['uid']
+    if not is_admin(uid):
+        return redirect('/')
+
+    cursor = g.conn.execute('SELECT * FROM product;')
+    results = list(cursor)
+
+    product_list = []
+    for prod in results:
+        product_list.append({'pid': prod[0], 'price': prod[1], 'description': prod[2], 'quantity': prod[3], 'name': prod[4], 'rating': prod[5]})
+
+    context = dict(prod_list = product_list)
+
+    return render_template('admin_remove_product.html', **context)
+
+@app.route('/admin/remove_product', methods=['POST'])
+def remove_product():
+    if 'uid' not in session:
+        return redirect('/')
+
+    uid = session['uid']
+    if not is_admin(uid):
+        return redirect('/')
+
+    pid = request.form['pid']
+
+    cursor = g.conn.execute('DELETE FROM belonging WHERE pid=%s;', (pid,))
+    cursor = g.conn.execute('DELETE FROM productoversee WHERE pid=%s;', (pid,))
+    cursor = g.conn.execute('DELETE FROM product WHERE pid=%s;', (pid,))
+    
+    return redirect('/admin')
+
+
 
 if __name__ == "__main__":
     import click

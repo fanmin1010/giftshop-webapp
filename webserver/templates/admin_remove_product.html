@@ -1,0 +1,33 @@
+{% extends "layout_template.html" %}
+<html>
+    <style>
+        body{
+            font-size: 15pt;
+            font-family: arial;
+        }
+    </style>
+
+
+    <body>
+
+        {% block top_body %}
+        {{ super() }}
+
+        <h1>Admin Page - Remove product</h1>
+
+        <form method="POST" action="/admin/remove_product">
+            {% for prod in prod_list %}
+            <div>
+                <input type="radio" name="pid" value="{{ prod.pid }}" checked><b>{{ prod.name }}</b> - {{ prod.description }}</br>
+            </div>
+            {% endfor %}
+            
+            <input type="submit" value="Remove product"></p>
+        </form>
+
+        {% endblock %}
+
+    </body>
+
+
+</html>
