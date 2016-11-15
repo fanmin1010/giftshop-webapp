@@ -1,0 +1,30 @@
+{% extends "layout_template.html" %}
+<html>
+    <style>
+        body{
+            font-size: 15pt;
+            font-family: arial;
+        }
+    </style>
+
+
+    <body>
+
+        {% block top_body %}
+        {{ super() }}
+
+        <h1>Admin Page - Add Category</h1>
+
+        <form method="POST" action="/admin/add_category">
+            <p>Name:  <input type="text" name="name"> </br> 
+            Description: <input type="text" name="description"> </br>
+            
+            <input type="submit" value="Add Category"></p>
+        </form>
+
+        {% endblock %}
+
+    </body>
+
+
+</html>

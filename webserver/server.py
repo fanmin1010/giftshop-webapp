@@ -411,6 +411,7 @@ def remove_product_page():
 
 @app.route('/admin/remove_product', methods=['POST'])
 def remove_product():
+
     if 'uid' not in session:
         return redirect('/')
 
@@ -423,6 +424,40 @@ def remove_product():
     cursor = g.conn.execute('DELETE FROM belonging WHERE pid=%s;', (pid,))
     cursor = g.conn.execute('DELETE FROM productoversee WHERE pid=%s;', (pid,))
     cursor = g.conn.execute('DELETE FROM product WHERE pid=%s;', (pid,))
+
+    return redirect('/admin')
+
+
+@app.route('/admin/add_category_page')
+def add_category_page():
+    login_name = logged()
+    is_user_admin = is_admin()
+
+    if 'uid' not in session:
+        return redirect('/')
+
+    uid = session['uid']
+    if not is_admin(uid):
+        return redirect('/')
+
+
+    context = dict(login_name = login_name, is_admin = is_user_admin)
+    return render_template('add_category_page.html', **context)
+
+@app.route('/admin/add_category', methods=['POST'])
+def add_category():
+    name = request.form['name']
+    description = request.form['description']
+
+    cursor = g.conn.execute('SELECT max(cat_id) FROM category;')
+    result = list(cursor)
+    cat_id = result[0][0] + 1
+
+    cursor = g.conn.execute('INSERT INTO category VALUES (%s, %s, %s);', (cat_id, name, description))
+
+    admin_id = session['uid']
+
+    cursor = g.conn.execute('INSERT INTO categorymanagement VALUES (%s, %s);', (cat_id, admin_id))
 
     return redirect('/admin')
 
