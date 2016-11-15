@@ -60,15 +60,21 @@
             margin: 5px;
             display: none;
         }
-
+        .boxindent {
+            border: 2px;
+            margin: 15px;
+            padding: 5px;
+        }
     </style>
 </head>
 
     <body>
         {% block top_body %}
             {% if login_name %}
-            <div>Hello, {{login_name}}</div>
+            <div><h2>Hello, {{login_name}}</h2></div>
             <div>
+                <a href="/user_order"><button>My Orders</button></a>
+                <a href="/add_book"><button>Addresses</button></a>
                 <a href="/logout"><button>Logout</button></a>
             </div>
             {% else %}
