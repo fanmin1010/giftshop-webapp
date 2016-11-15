@@ -446,6 +446,14 @@ def add_category_page():
 
 @app.route('/admin/add_category', methods=['POST'])
 def add_category():
+    if 'uid' not in session:
+        return redirect('/')
+
+    uid = session['uid']
+    if not is_admin(uid):
+        return redirect('/')
+
+
     name = request.form['name']
     description = request.form['description']
 
@@ -458,6 +466,53 @@ def add_category():
     admin_id = session['uid']
 
     cursor = g.conn.execute('INSERT INTO categorymanagement VALUES (%s, %s);', (cat_id, admin_id))
+
+    return redirect('/admin')
+
+@app.route('/admin/remove_category_page')
+def remove_category_page():
+    login_name = logged()
+    is_user_admin = is_admin()
+
+    if 'uid' not in session:
+        return redirect('/')
+
+    uid = session['uid']
+    if not is_admin(uid):
+        return redirect('/')
+
+    cursor = g.conn.execute('SELECT * FROM category c WHERE EXISTS( SELECT * FROM belonging b WHERE c.cat_id=b.cat_id);')
+    print('Category with products')
+    categories_with_products = []
+    for result in list(cursor):
+        categories_with_products.append({'cat_id': result[0], 'name': result[1], 'description': result[2]})
+        print(result)
+
+    cursor = g.conn.execute('SELECT * FROM category c WHERE NOT EXISTS( SELECT * FROM belonging b WHERE c.cat_id=b.cat_id);')
+    print('Category without products')
+    categories_without_products = []
+    for result in list(cursor):
+        categories_without_products.append({'cat_id': result[0], 'name': result[1], 'description': result[2]})
+        print(result)
+
+
+    context = dict(login_name = login_name, is_admin = is_user_admin, categories_with_products = categories_with_products, categories_without_products = categories_without_products)
+    return render_template('remove_category_page.html', **context)
+
+
+@app.route('/admin/remove_category', methods=['POST'])
+def remove_category():
+    if 'uid' not in session:
+        return redirect('/')
+
+    uid = session['uid']
+    if not is_admin(uid):
+        return redirect('/')
+
+    cat_id = request.form['cat_id']
+
+    cursor = g.conn.execute('DELETE FROM categorymanagement WHERE cat_id=%s;', (cat_id,))
+    cursor = g.conn.execute('DELETE FROM category WHERE cat_id=%s;', (cat_id,))
 
     return redirect('/admin')
 
