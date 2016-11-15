@@ -332,7 +332,20 @@ def admin_page():
     if not is_admin(uid):
         return redirect('/')
 
-    context = dict(login_name = login_name, is_admin = is_user_admin)
+    cursor = g.conn.execute('SELECT p.name, u.name FROM product p, productoversee po, users u WHERE p.pid=po.pid and po.admin_id=u.uid;')
+
+    list_products = []
+    for result in list(cursor):
+        list_products.append({'product_name': result[0], 'managed_by': result[1]})
+
+    cursor = g.conn.execute('SELECT c.name, u.name FROM category c, categorymanagement cm, users u WHERE c.cat_id=cm.cat_id and cm.admin_id=u.uid;')
+
+    list_categories = []
+    for result in list(cursor):
+        list_categories.append({'category_name': result[0], 'managed_by': result[1]})
+
+
+    context = dict(login_name = login_name, is_admin = is_user_admin, list_products=list_products, list_categories=list_categories)
     return render_template('admin_page.html', **context)
 
 @app.route('/admin/add_product_page')

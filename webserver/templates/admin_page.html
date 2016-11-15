@@ -20,6 +20,16 @@
         <div><a href="/admin/add_category_page">Add category</a></div>
         <div><a href="/admin/remove_category_page">Remove category</a></div>
 
+        <h3>Products</h3>
+        {% for product in list_products %}
+        <div>{{product.product_name}} - Managed by: {{product.managed_by}}</div>
+        {% endfor %}
+
+        <h3>Categories</h3>
+        {% for category in list_categories %}
+        <div>{{category.category_name}} - Managed by: {{category.managed_by}}</div>
+        {% endfor %}
+
         {% endblock %}
 
     </body>
