@@ -3,11 +3,23 @@
     <body>
         {% block top_body %}
         {{ super() }}
-        <h2>Gift Catelogue</h2> 
+        <h2>Gift Catelogue</h2>
         {% for pds in product_list %}
         <div><a href="/product/{{ pds.pid }}">><b>{{ pds.name }}</b></a> - {{ pds.description }}</div>
         {% endfor %}
+        <h4>Select tags to refine your products</h4>
 
+        <form method="POST" action ="/refine_product">
+            {% for tag in tag_list %}
+            {% if tag_sel and  tag in tag_sel %}
+            <input type="checkbox" name="tags" value="{{tag.name}}" checked>{{tag.name}}&nbsp; &nbsp;
+            {% else %}
+            <input type="checkbox" name="tags" value="{{tag.name}}">{{tag.name}}&nbsp; &nbsp;
+            {% endif %}
+            {% endfor %}
+            <br>
+            <button type="submit">Refine</button>
+        </form>
         {% endblock %}
     </body>
 

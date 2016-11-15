@@ -170,14 +170,44 @@ def logout():
 def product():
     login_name = logged()
 
-
     is_user_admin = is_admin()
     cursor = g.conn.execute('SELECT * FROM product;')
 
     result = cursor.fetchall()
     num_prod = len(result)
-    context = dict(product_list = result, num_products = num_prod, login_name = login_name, is_admin = is_user_admin)
+    cursor = g.conn.execute('SELECT name FROM category;');
+    tag_list = cursor.fetchall()
+    context = dict(product_list = result, num_products = num_prod, login_name = login_name, is_admin = is_user_admin, tag_list = tag_list)
     return render_template('product.html', **context)
+
+@app.route('/refine_product', methods = ['POST'])
+def refine_product():
+    tag_sel = request.form.getlist('tags')
+    login_name = logged()
+    is_user_admin = is_admin()
+
+    if len(tag_sel) == 0:
+        return redirect('/product')
+    cmd = "SELECT cat_id FROM category WHERE name=%s"
+    cmd2 = "SELECT name FROM category WHERE name=%s"
+    for idx, tag in enumerate(tag_sel):
+        if idx == 0:
+            continue
+        else:
+            cmd2 = cmd2+' or name = %s'
+            cmd = cmd+' or name = %s'
+
+    n_cmd = 'WITH t1 AS ( '+ cmd +' ) SELECT * FROM product WHERE NOT EXISTS (SELECT cat_id FROM t1 WHERE NOT EXISTS (SELECT B.cat_id FROM belonging AS B WHERE product.pid = B.pid AND B.cat_id = t1.cat_id));'
+    args = tuple(tag_sel)
+    cursor = g.conn.execute(n_cmd, args)
+    result = cursor.fetchall()
+    cursor = g.conn.execute('SELECT name FROM category;');
+    tag_list = cursor.fetchall()
+    cursor = g.conn.execute(cmd2, args)
+    tag_sel = cursor.fetchall()
+    context = dict(product_list = result, login_name = login_name, is_admin = is_user_admin, tag_list = tag_list, tag_sel = tag_sel)
+    return render_template('product.html', **context)
+
 
 @app.route('/product/<pid>')
 def product_page(pid):
