@@ -169,10 +169,8 @@ def logout():
 @app.route('/product')
 def product():
     login_name = logged()
-
     is_user_admin = is_admin()
     cursor = g.conn.execute('SELECT * FROM product;')
-
     result = cursor.fetchall()
     num_prod = len(result)
     cursor = g.conn.execute('SELECT name FROM category;');

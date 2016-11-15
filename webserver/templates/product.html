@@ -7,6 +7,7 @@
         {% for pds in product_list %}
         <div><a href="/product/{{ pds.pid }}">><b>{{ pds.name }}</b></a> - {{ pds.description }}</div>
         {% endfor %}
+
         <h4>Select tags to refine your products</h4>
 
         <form method="POST" action ="/refine_product">
