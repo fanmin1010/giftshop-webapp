@@ -7,6 +7,11 @@
         {% for pds in product_list %}
         <div><a href="/product/{{ pds.pid }}">><b>{{ pds.name }}</b></a> - {{ pds.description }}</div>
         {% endfor %}
+        
+        <h3>Search by category</h3>
+        {% for cat in category_list %}
+        <input type="checkbox" name="vehicle" value="{{cat.cat_id}}"> {{cat.name}} </br>
+        {% endfor %}
 
         {% endblock %}
     </body>

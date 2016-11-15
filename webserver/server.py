@@ -176,7 +176,13 @@ def product():
 
     result = cursor.fetchall()
     num_prod = len(result)
-    context = dict(product_list = result, num_products = num_prod, login_name = login_name, is_admin = is_user_admin)
+
+    cursor = g.conn.execute('SELECT name, cat_id FROM category;')
+    category_list = []
+    for category in list(cursor):
+        category_list.append({'name': category[0], 'cat_id': category[1]})
+
+    context = dict(product_list = result, num_products = num_prod, login_name = login_name, is_admin = is_user_admin, category_list = category_list)
     return render_template('product.html', **context)
 
 @app.route('/product/<pid>')
