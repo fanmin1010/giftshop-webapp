@@ -510,6 +510,15 @@ def remove_category():
         return redirect('/')
 
     cat_id = request.form['cat_id']
+    
+    # Check if we are allowed to delete the category
+    cursor = g.conn.execute('SELECT EXISTS (SELECT 1 FROM category c WHERE NOT EXISTS( SELECT * FROM belonging b WHERE c.cat_id=%s and c.cat_id=b.cat_id));',(cat_id,))
+    is_exists = list(cursor)[0][0]
+
+    if not is_exists:
+        print('You are not allowed to delete category {}'.format(cat_id))
+        return redirect('/admin')
+
 
     cursor = g.conn.execute('DELETE FROM categorymanagement WHERE cat_id=%s;', (cat_id,))
     cursor = g.conn.execute('DELETE FROM category WHERE cat_id=%s;', (cat_id,))
