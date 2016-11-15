@@ -1,0 +1,41 @@
+{% extends "layout_template.html" %}
+<html>
+    <style>
+        body{
+            font-size: 15pt;
+            font-family: arial;
+        }
+    </style>
+
+
+    <body>
+
+        {% block top_body %}
+        {{ super() }}
+
+        <h1>Admin Page - Edit product</h1>
+
+        <form method="POST" action="/admin/edit_product">
+            {% for prod in prod_list %}
+            <div>
+                <input type="radio" name="pid" value="{{ prod.pid }}" checked><b>{{ prod.name }}</b> - {{ prod.description }}</br>
+            </div>
+            {% endfor %}
+
+            <div><p>Name: <input type="text" name="name"> </br>
+                Description: <input type="text" name="description"> </br>
+                Quantity: <input type="text" name="quantity"> </br>
+                Price: <input type="text" name="price"> </br>
+                Rating: <input type="text" name="rating"> </br>
+                Pic Address: <input type="text" name="pic_address"> </br>
+                </p>
+            
+            <input type="submit" value="Edit product"></p>
+        </form>
+
+        {% endblock %}
+
+    </body>
+
+
+</html>

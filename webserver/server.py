@@ -342,17 +342,24 @@ def admin_page():
     if not is_admin(uid):
         return redirect('/')
 
-    cursor = g.conn.execute('SELECT p.name, u.name FROM product p, productoversee po, users u WHERE p.pid=po.pid and po.admin_id=u.uid;')
+    cursor = g.conn.execute('SELECT p.name, u.name, u.uid FROM product p, productoversee po, users u WHERE p.pid=po.pid and po.admin_id=u.uid;')
 
     list_products = []
     for result in list(cursor):
-        list_products.append({'product_name': result[0], 'managed_by': result[1]})
+        you_manage = False
+        if result[2] == uid:
+            you_manage = True
+        list_products.append({'product_name': result[0], 'managed_by': result[1], 'you_manage': you_manage})
 
-    cursor = g.conn.execute('SELECT c.name, u.name FROM category c, categorymanagement cm, users u WHERE c.cat_id=cm.cat_id and cm.admin_id=u.uid;')
+    cursor = g.conn.execute('SELECT c.name, u.name, u.uid FROM category c, categorymanagement cm, users u WHERE c.cat_id=cm.cat_id and cm.admin_id=u.uid;')
 
     list_categories = []
     for result in list(cursor):
-        list_categories.append({'category_name': result[0], 'managed_by': result[1]})
+        you_manage = False
+        if result[2] == uid:
+            you_manage = True
+
+        list_categories.append({'category_name': result[0], 'managed_by': result[1], 'you_manage': you_manage})
 
 
     context = dict(login_name = login_name, is_admin = is_user_admin, list_products=list_products, list_categories=list_categories)
@@ -447,6 +454,69 @@ def remove_product():
     cursor = g.conn.execute('DELETE FROM belonging WHERE pid=%s;', (pid,))
     cursor = g.conn.execute('DELETE FROM productoversee WHERE pid=%s;', (pid,))
     cursor = g.conn.execute('DELETE FROM product WHERE pid=%s;', (pid,))
+
+    return redirect('/admin')
+
+@app.route('/admin/edit_product_page')
+def edit_product_page():
+    login_name = logged()
+    is_user_admin = is_admin()
+
+    if 'uid' not in session:
+        return redirect('/')
+
+    uid = session['uid']
+    if not is_admin(uid):
+        return redirect('/')
+
+    cursor = g.conn.execute('SELECT * FROM product;')
+    results = list(cursor)
+
+    product_list = []
+    for prod in results:
+        product_list.append({'pid': prod[0], 'price': prod[1], 'description': prod[2], 'quantity': prod[3], 'name': prod[4], 'rating': prod[5]})
+
+    context = dict(prod_list = product_list, login_name = login_name, is_admin = is_user_admin)
+
+    return render_template('edit_product_page.html', **context)
+
+@app.route('/admin/edit_product', methods=['POST'])
+def edit_product():
+    if 'uid' not in session:
+        return redirect('/')
+
+    uid = session['uid']
+    if not is_admin(uid):
+        return redirect('/')
+
+    name = request.form['name']
+    description = request.form['description']
+    rating = request.form['rating']
+    quantity = request.form['quantity']
+    price = request.form['price']
+    pic_address = request.form['pic_address']
+
+
+    for strings in [name, description, rating, quantity, price, pic_address]:
+        if len(strings.strip()) <= 0:
+            context = dict(error_msg = 'Inputs should not be empty')
+            return render_template('edit_product_page.html', **context)
+
+    try:
+        temp = float(price)
+    except Exception:
+        context = dict(error_msg = 'Price is not a valid number')
+        return render_template('edit_product_page.html', **context)
+
+    try:
+        temp = int(quantity)
+    except Exception:
+        context = dict(error_msg = 'Quantity is not a valid number')
+        return render_template('edit_product_page.html', **context)
+
+    pid = request.form['pid']
+
+    g.conn.execute('UPDATE product SET name=%s, description=%s, price=%s, quantity=%s, rating=%s, pic_address=%s WHERE pid=%s;', (name, description, price, quantity, rating, pic_address, pid))
 
     return redirect('/admin')
 
