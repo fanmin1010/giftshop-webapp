@@ -169,8 +169,11 @@ def logout():
 @app.route('/product')
 def product():
     login_name = logged()
+
+
     is_user_admin = is_admin()
     cursor = g.conn.execute('SELECT * FROM product;')
+
     result = cursor.fetchall()
     num_prod = len(result)
     context = dict(product_list = result, num_products = num_prod, login_name = login_name, is_admin = is_user_admin)
@@ -288,12 +291,19 @@ def purchase():
     admax = int(cursor.first()[0])
     admini = 11
     admin_id = randint(admini, admax)
-    cursor = g.conn.execute('SELECT price FROM product WHERE pid = %s', (pid))
-    amount = cursor.first()[0]
+    cursor = g.conn.execute('SELECT price, quantity FROM product WHERE pid = %s', (pid))
+    res = cursor.first()
+    amount = res[0]
+    quantity = res[1]
+    if quantity == '0':
+        context['error_msg'] = 'Sorry this product is completely sold out.'
+        return render_template('purchase_page.html', **context)
+    else:
+        quantity = int(quantity)
+        quantity = quantity - 1
+        cursor = g.conn.execute('UPDATE product SET quantity = %s WHERE pid = %s', (quantity, pid))
     date = datetime.datetime.now().date()
     time = datetime.datetime.now().time()
-    print date
-    print time
     cmd = 'INSERT INTO orders(order_id, billing_info, amount, shipadd_id, cid, admin_id, order_date, order_time) VALUES (%s, %s, %s, %s, %s, %s, %s, %s)'
     new_order = (order_id, bill_info, amount, add_id, uid, admin_id, date, time)
     cursor = g.conn.execute(cmd, new_order)
@@ -440,6 +450,33 @@ def remove_product():
 
     return redirect('/admin')
 
+@app.route('/user_order')
+def show_orders():
+    if 'uid' not in session:
+        context = dict(error_msg='Please login first.')
+        return render_template('index.html', **context)
+    uid = session['uid']
+    cursor = g.conn.execute('WITH t1 AS (SELECT * FROM orders WHERE cid = %s), t2 AS (SELECT t1.order_id AS oid, count(*) AS item_amount FROM t1 INNER JOIN orderContains AS oc ON t1.order_id=oc.order_id GROUP BY oid) SELECT oid, item_amount, billing_info, amount, shipadd_id, order_date, order_time, ship_time, tracking_num FROM t2 JOIN t1 ON t1.order_id = t2.oid;', (uid))
+    result = cursor.fetchall()
+    res = []
+    for order in result:
+        oid = order['oid']
+        order_info = dict(order)
+        prod = []
+        cursor = g.conn.execute('SELECT * FROM address WHERE add_id = %s', order['shipadd_id'])
+        ship_info = cursor.first()
+        cursor = g.conn.execute('WITH t1 AS (SELECT * FROM orderContains WHERE order_id = %s) SELECT product.pid AS p_id, product_quantity, name, description, price FROM t1 JOIN product ON t1.pid = product.pid;', (oid))
+        ps = cursor.fetchall()
+        for p in ps:
+            pd = dict(p)
+            pd['pr'] = repr(pd['price'])
+            prod.append(pd)
+        order_info['products'] = prod
+        order_info['ship_info'] = 'Name:' + ship_info['name'] + ' @ ' + ship_info['street_info'] + ' ' + ship_info['city'] + ' ' +ship_info['state']+' '+ repr(ship_info['zip'])
+        res.append(order_info)
+    login_name = logged()
+    context = dict(order_list = res, login_name=login_name)
+    return render_template('orders.html', **context)
 
 @app.route('/admin/add_category_page')
 def add_category_page():
@@ -523,7 +560,7 @@ def remove_category():
         return redirect('/')
 
     cat_id = request.form['cat_id']
-    
+
     # Check if we are allowed to delete the category
     cursor = g.conn.execute('SELECT EXISTS (SELECT 1 FROM category c WHERE NOT EXISTS( SELECT * FROM belonging b WHERE c.cat_id=%s and c.cat_id=b.cat_id));',(cat_id,))
     is_exists = list(cursor)[0][0]
@@ -537,8 +574,6 @@ def remove_category():
     cursor = g.conn.execute('DELETE FROM category WHERE cat_id=%s;', (cat_id,))
 
     return redirect('/admin')
-
-
 
 if __name__ == "__main__":
     import click

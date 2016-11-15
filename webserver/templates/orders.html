@@ -1,0 +1,35 @@
+{% extends "layout_template.html" %}
+<html>
+    <body>
+        {% block top_body %}
+        {{ super() }}
+        <h2>Your orders:</h2>
+        <hr/>
+        {% for od in order_list %}
+        <div class = "boxindent"><h3>Order number {{od.oid}}</h3>
+            <hr/>
+            <h5>Item amount: {{od.item_amount}} Billing info: {{od.billing_info}} Total amount: ${{od.amount}} Order time: {{od.order_date}} {{od.order_time}}</h5>
+            <hr/>
+            <h5>Ship to: {{od.ship_info}}
+            {% if od.ship_time %}
+            <h5>Shipped on: {{od.ship_time}} Tracking number: {{od.tracking_num}}</h5>
+            <hr/>
+            {% else %}
+            <h5> Not shipped yet.</h5>
+            {% endif %}
+            <hr/>
+            <div class="boxindent">
+                {% for pd in od.products %}
+                <div><a href="/product/{{ pd.pid }}">><b>{{ pd.name }}</b></a> - {{ pd.description }} Amount: {{pd.product_quantity}} Price: {{ pd.pr }}</div>
+                {% endfor %}
+            </div>
+            <hr/>
+
+        </div>
+        <hr/>
+        {% endfor %}
+
+        {% endblock %}
+    </body>
+
+</html>
