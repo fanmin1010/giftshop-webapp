@@ -457,6 +457,51 @@ def remove_product():
 
     return redirect('/admin')
 
+@app.route('/admin/edit_product_page')
+def edit_product_page():
+    login_name = logged()
+    is_user_admin = is_admin()
+
+    if 'uid' not in session:
+        return redirect('/')
+
+    uid = session['uid']
+    if not is_admin(uid):
+        return redirect('/')
+
+    cursor = g.conn.execute('SELECT * FROM product;')
+    results = list(cursor)
+
+    product_list = []
+    for prod in results:
+        product_list.append({'pid': prod[0], 'price': prod[1], 'description': prod[2], 'quantity': prod[3], 'name': prod[4], 'rating': prod[5]})
+
+    context = dict(prod_list = product_list, login_name = login_name, is_admin = is_user_admin)
+
+    return render_template('edit_product_page.html', **context)
+
+@app.route('/admin/edit_product', methods=['POST'])
+def edit_product():
+    if 'uid' not in session:
+        return redirect('/')
+
+    uid = session['uid']
+    if not is_admin(uid):
+        return redirect('/')
+
+    name = request.form['name']
+    description = request.form['description']
+    rating = request.form['rating']
+    quantity = request.form['quantity']
+    price = request.form['price']
+    pic_address = request.form['pic_address']
+
+    pid = request.form['pid']
+
+    g.conn.execute('UPDATE product SET name=%s, description=%s, price=%s, quantity=%s, rating=%s, pic_address=%s WHERE pid=%s;', (name, description, price, quantity, rating, pic_address, pid))
+
+    return redirect('/admin')
+
 @app.route('/user_order')
 def show_orders():
     if 'uid' not in session:

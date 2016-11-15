@@ -20,6 +20,8 @@
         <div><a href="/admin/add_category_page">Add category</a></div>
         <div><a href="/admin/remove_category_page">Remove category</a></div>
 
+        <div><a href="/admin/edit_product_page">Edit product</a></div>
+
         <h3>Products</h3>
         {% for product in list_products %}
         <div>{{product.product_name}} - Managed by: {{product.managed_by}} {% if product.you_manage %} - <b>You manage this!</b>{% endif %}</div>
