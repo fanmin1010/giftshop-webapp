@@ -71,6 +71,12 @@
             <div>
                 <a href="/logout"><button>Logout</button></a>
             </div>
+                {% if is_admin %}
+                <div>
+                    <a href="/admin"><button>Admin Page</button></a>
+                </div>
+                {% endif %}
+
             {% else %}
             <div>
                 <a href="/login_page"><button>Login</button></a>
