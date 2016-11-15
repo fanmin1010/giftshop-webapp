@@ -22,12 +22,12 @@
 
         <h3>Products</h3>
         {% for product in list_products %}
-        <div>{{product.product_name}} - Managed by: {{product.managed_by}}</div>
+        <div>{{product.product_name}} - Managed by: {{product.managed_by}} {% if product.you_manage %} - <b>You manage this!</b>{% endif %}</div>
         {% endfor %}
 
         <h3>Categories</h3>
         {% for category in list_categories %}
-        <div>{{category.category_name}} - Managed by: {{category.managed_by}}</div>
+        <div>{{category.category_name}} - Managed by: {{category.managed_by}} {% if category.you_manage %} - <b>You manage this!</b> {% endif %}</div>
         {% endfor %}
 
         {% endblock %}
