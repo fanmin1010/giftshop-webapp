@@ -1,0 +1,35 @@
+{% extends "layout_template.html" %}
+<html>
+    <body>
+        {% block top_body %}
+        {{ super() }}
+        <h2>Your addresses:</h2>
+        <hr/>
+        {% for add in address_list %}
+        <div class = "boxindent"><h3>Address number {{add.add_id}}</h3>
+            <hr/>
+            <h5>Name: {{add.name}} Street info: {{add.street_info}} City: {{add.city}} State: {{add.state}} Zip: {{add.zip}}</h5>
+            <a href="/add_edit/{{add.add_id}}"><button> edit</button></a>
+            <a href="/add_delete/{{add.add_id}}"><button>delete</button></a>
+            <hr/>
+
+
+        </div>
+        <hr/>
+        {% endfor %}
+        <form method="POST" action="/add_add">
+        <h3>Add a new address:</h3>
+        <p>Name: <input type="text" name="name"> </br>
+        Street: <input type="text" name="street"> </br>
+        City: <input type="text" name="city"> </br>
+        State (Abbr.): <input type="text" name="state"> </br>
+        Zip: <input type="text" name="zip"> </br>
+        <button type="submit">Add address</button>
+    </form>
+
+        </p>
+
+        {% endblock %}
+    </body>
+
+</html>

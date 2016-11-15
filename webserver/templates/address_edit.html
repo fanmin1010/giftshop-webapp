@@ -1,0 +1,23 @@
+{% extends "layout_template.html" %}
+<html>
+    <body>
+        {% block top_body %}
+        {{ super() }}
+        <hr/>
+        <form method="POST" action="/add_edit_submit/{{add_id}}">
+        <h3>Edit address # {{add_id}}:</h3>
+        <p>Name:<input type="text" name="name" value ="{{name}}"></br>
+        Street: <input type="text" name="street" value = "{{street_info}}"> </br>
+        City: <input type="text"
+         name="city" value = "{{city}}"> </br>
+        State (Abbr.): <input type="text" name="state" value = "{{state}}"> </br>
+        Zip: <input type="text" name="zip" value = "{{zip}}"> </br>
+        <button type="submit">Submit</button>
+    </form>
+
+        </p>
+
+        {% endblock %}
+    </body>
+
+</html>

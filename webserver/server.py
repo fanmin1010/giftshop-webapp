@@ -193,11 +193,11 @@ def product_page(pid):
     return render_template('single_product.html', **context)
 
 def get_addr_list(uid):
-    cursor = g.conn.execute('SELECT a.add_id, a.name, a.street_info FROM address a, addressmaintenance am, users u, consumer c  WHERE u.uid=%s and u.uid=c.cid  and c.cid=am.cid and a.add_id=am.add_id;', (uid))
+    cursor = g.conn.execute('SELECT a.add_id, a.name, a.street_info, a.city, a.state, a.zip FROM address a, addressmaintenance am, users u, consumer c  WHERE u.uid=%s and u.uid=c.cid  and c.cid=am.cid and a.add_id=am.add_id;', (uid))
     result = list(cursor)
     addr_list = []
     for addr in result:
-        addr_list.append({'add_id': addr[0], 'name': addr[1], 'street_info': addr[2]})
+        addr_list.append({'add_id': addr[0], 'name': addr[1], 'street_info': addr[2], 'city': addr[3], 'state': addr[4], 'zip': repr(addr[5])})
     return addr_list
 
 @app.route('/purchase_product/<pid>')
@@ -456,7 +456,7 @@ def show_orders():
         context = dict(error_msg='Please login first.')
         return render_template('index.html', **context)
     uid = session['uid']
-    cursor = g.conn.execute('WITH t1 AS (SELECT * FROM orders WHERE cid = %s), t2 AS (SELECT t1.order_id AS oid, count(*) AS item_amount FROM t1 INNER JOIN orderContains AS oc ON t1.order_id=oc.order_id GROUP BY oid) SELECT oid, item_amount, billing_info, amount, shipadd_id, order_date, order_time, ship_time, tracking_num FROM t2 JOIN t1 ON t1.order_id = t2.oid;', (uid))
+    cursor = g.conn.execute('WITH t1 AS (SELECT * FROM orders WHERE cid = %s), t2 AS (SELECT t1.order_id AS oid, count(*) AS item_amount FROM t1 INNER JOIN orderContains AS oc ON t1.order_id=oc.order_id GROUP BY oid) SELECT oid, item_amount, billing_info, amount, shipadd_id, order_date, order_time, ship_time, tracking_num FROM t2 JOIN t1 ON t1.order_id = t2.oid ORDER BY order_date DESC, order_time DESC;', (uid))
     result = cursor.fetchall()
     res = []
     for order in result:
@@ -477,6 +477,98 @@ def show_orders():
     login_name = logged()
     context = dict(order_list = res, login_name=login_name)
     return render_template('orders.html', **context)
+
+@app.route('/add_book')
+def get_addr():
+
+    if 'uid' not in session:
+        context = dict(error_msg='Please login first.')
+        return render_template('index.html', **context)
+    uid = session['uid']
+    addr_list = get_addr_list(uid)
+    login_name = logged()
+    context = dict(login_name=login_name, address_list = addr_list)
+    return render_template('add_manage.html', **context)
+
+def valid_address(name, street_info, city, state, add_zip):
+    error_msg = ""
+    if len(name) <3 or len(name) >40:
+        error_msg = error_msg+"Invalid name."
+    elif len(street_info)<3:
+        error_msg = error_msg+" Street info too short."
+    elif len(state) == 0 or len(state)>3:
+        error_msg = error_msg+" Invalid state (two-letter abbr only)."
+    elif len(city) == 0:
+        error_msg = error_msg+" Invalid city."
+    elif len(add_zip) <4 or len(add_zip)>7:
+        error_msg = error_msg+" Invalid zip."
+    else:
+        try:
+            int(add_zip)
+        except (ValueError, TypeError):
+            error_msg = error_msg+" Zip must be numbers only."
+    return error_msg
+
+@app.route('/add_edit/<add_id>')
+def edit_address(add_id):
+    if not ('uid' in session):
+        return redirect('/login_page')
+    login_name = logged()
+    cursor = g.conn.execute('SELECT * FROM address WHERE add_id = %s;', (add_id))
+    add = cursor.first()
+
+    context = dict(add)
+    context['login_name'] = login_name
+    return render_template('address_edit.html', **context)
+
+@app.route('/add_edit_submit/<add_id>', methods=['POST'])
+def add_edit_submit(add_id):
+    if not ('uid' in session):
+        return redirect('/login_page')
+    login_name = logged()
+    name = request.form['name']
+    street_info = request.form['street']
+    city = request.form['city']
+    state = request.form['state']
+    add_zip = request.form['zip']
+    error_msg = valid_address(name, street_info, city, state, add_zip)
+    context = dict(login_name=login_name, name = name, street_info = street_info, city = city, state = state, error_msg = error_msg, zip = add_zip)
+    if error_msg != "":
+        return render_template('address_edit.html', **context)
+    g.conn.execute("UPDATE address SET name = %s, street_info=%s, city=%s, state = %s, zip=%s WHERE add_id = %s;", (name, street_info, city, state, add_zip, add_id))
+    return redirect('/add_book')  # error address not found
+
+@app.route('/add_add', methods=['POST'])
+def add_add():
+    if not ('uid' in session):
+        return redirect('/login_page')
+    login_name = logged()
+    name = request.form['name']
+    street_info = request.form['street']
+    city = request.form['city']
+    state = request.form['state']
+    add_zip = request.form['zip']
+    error_msg = valid_address(name, street_info, city, state, add_zip)
+    context = dict(login_name=login_name, name = name, street_info = street_info, city = city, state = state, error_msg = error_msg, zip = add_zip)
+    if error_msg != "":
+        return render_template('address_add.html', **context)
+    cursor = g.conn.execute("SELECT add_id FROM address ORDER BY add_id DESC;")
+    res = cursor.first()
+    curr_index = res['add_id']
+    add_id = int(curr_index) + 1
+    g.conn.execute("INSERT INTO address VALUES(%s, %s, %s, %s, %s, %s)", (add_id, name, street_info, city, state, add_zip))
+    uid=session['uid']
+    g.conn.execute("INSERT INTO addressMaintenance VALUES(%s, %s)", (add_id, uid))
+    return redirect('/add_book')
+
+@app.route('/add_delete/<add_id>')
+def delete_add(add_id):
+    if not ('uid' in session):
+        return redirect('/login_page')
+    login_name = logged()
+    uid = session['uid']
+    cursor = g.conn.execute('DELETE FROM addressMaintenance WHERE cid = %s and add_id = %s;', (uid, add_id))
+    return redirect('/add_book')
 
 @app.route('/admin/add_category_page')
 def add_category_page():
