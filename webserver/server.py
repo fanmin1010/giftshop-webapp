@@ -496,6 +496,24 @@ def edit_product():
     price = request.form['price']
     pic_address = request.form['pic_address']
 
+
+    for strings in [name, description, rating, quantity, price, pic_address]:
+        if len(strings.strip()) <= 0:
+            context = dict(error_msg = 'Inputs should not be empty')
+            return render_template('edit_product_page.html', **context)
+
+    try:
+        temp = float(price)
+    except Exception:
+        context = dict(error_msg = 'Price is not a valid number')
+        return render_template('edit_product_page.html', **context)
+
+    try:
+        temp = int(quantity)
+    except Exception:
+        context = dict(error_msg = 'Quantity is not a valid number')
+        return render_template('edit_product_page.html', **context)
+
     pid = request.form['pid']
 
     g.conn.execute('UPDATE product SET name=%s, description=%s, price=%s, quantity=%s, rating=%s, pic_address=%s WHERE pid=%s;', (name, description, price, quantity, rating, pic_address, pid))
