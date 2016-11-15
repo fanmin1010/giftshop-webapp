@@ -169,12 +169,11 @@ def logout():
 @app.route('/product')
 def product():
     login_name = logged()
-<<<<<<< HEAD
-    cursor = g.conn.execute('SELECT * FROM product WHERE quantity > 0;')
-=======
+
+
     is_user_admin = is_admin()
     cursor = g.conn.execute('SELECT * FROM product;')
->>>>>>> b28a238deac98540915187d233108e211acde5e6
+
     result = cursor.fetchall()
     num_prod = len(result)
     context = dict(product_list = result, num_products = num_prod, login_name = login_name, is_admin = is_user_admin)
