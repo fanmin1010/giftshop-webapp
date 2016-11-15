@@ -70,7 +70,8 @@ def logged():
 @app.route('/')
 def index():
   login_name = logged()
-  context = dict(login_name = login_name)
+  is_user_admin = is_admin()
+  context = dict(login_name = login_name, is_admin = is_user_admin)
   return render_template("index.html", **context)
 
 @app.route('/registration', methods=['GET'])
@@ -168,21 +169,28 @@ def logout():
 @app.route('/product')
 def product():
     login_name = logged()
+<<<<<<< HEAD
     cursor = g.conn.execute('SELECT * FROM product WHERE quantity > 0;')
+=======
+    is_user_admin = is_admin()
+    cursor = g.conn.execute('SELECT * FROM product;')
+>>>>>>> b28a238deac98540915187d233108e211acde5e6
     result = cursor.fetchall()
     num_prod = len(result)
-    context = dict(product_list = result, num_products = num_prod, login_name = login_name)
+    context = dict(product_list = result, num_products = num_prod, login_name = login_name, is_admin = is_user_admin)
     return render_template('product.html', **context)
 
 @app.route('/product/<pid>')
 def product_page(pid):
     login_name = logged()
+    is_user_admin = is_admin()
+
     cursor = g.conn.execute('SELECT * FROM product WHERE pid=%s;', (pid))
     result = cursor.fetchone()
     if result is None:
         print('Product for pid {} does not exist'.format(pid))
         return redirect('/product')
-    context = dict(product_id = pid, product_name = result['name'], product_price = result['price'], product_description = result['description'], product_rating = result['rating'], product_quantity = result['quantity'], login_name = login_name)
+    context = dict(product_id = pid, product_name = result['name'], product_price = result['price'], product_description = result['description'], product_rating = result['rating'], product_quantity = result['quantity'], login_name = login_name, is_admin = is_user_admin)
     return render_template('single_product.html', **context)
 
 def get_addr_list(uid):
@@ -198,6 +206,8 @@ def purchase_product(pid):
     if not ('uid' in session):
         return redirect('/login_page')
     login_name = logged()
+    is_user_admin = is_admin()
+
     cursor = g.conn.execute('SELECT name FROM product where pid=%s;', (pid))
     result = list(cursor)
     prod_name = result[0][0]
@@ -205,7 +215,7 @@ def purchase_product(pid):
     uid = session['uid']
     addr_list = get_addr_list(uid)
 
-    context = dict(product_id = pid, product_name = prod_name, address_list = addr_list, login_name = login_name)
+    context = dict(product_id = pid, product_name = prod_name, address_list = addr_list, login_name = login_name, is_admin = is_user_admin)
 
     return render_template('purchase_page.html', **context)
 
@@ -311,7 +321,11 @@ def purchase():
     return render_template('order_confirm.html', **context)
 
 
-def is_admin(uid):
+def is_admin(uid=None):
+    is_admin = False
+    if uid is None and 'uid' in session:
+        uid = session['uid']
+
     cursor = g.conn.execute("SELECT EXISTS(SELECT 1 FROM administrator a WHERE a.admin_id=%s);", (uid,))
     result = cursor.fetchone()[0]
     return result
@@ -319,6 +333,9 @@ def is_admin(uid):
 
 @app.route('/admin')
 def admin_page():
+    login_name = logged()
+    is_user_admin = is_admin()
+
     if 'uid' not in session:
         return redirect('/')
 
@@ -326,11 +343,14 @@ def admin_page():
     if not is_admin(uid):
         return redirect('/')
 
-    context = dict(a = 1)
+    context = dict(login_name = login_name, is_admin = is_user_admin)
     return render_template('admin_page.html', **context)
 
 @app.route('/admin/add_product_page')
 def admin_add_product():
+    login_name = logged()
+    is_user_admin = is_admin()
+
     if 'uid' not in session:
         return redirect('/')
 
@@ -344,7 +364,7 @@ def admin_add_product():
     for cat in results:
         category_list.append({'cat_id': cat[0], 'name': cat[1]})
 
-    context = dict(cat_list = category_list)
+    context = dict(cat_list = category_list, login_name = login_name, is_admin = is_user_admin)
 
     return render_template('admin_add_product.html', **context)
 
@@ -379,6 +399,9 @@ def add_product():
 
 @app.route('/admin/remove_product_page')
 def remove_product_page():
+    login_name = logged()
+    is_user_admin = is_admin()
+
     if 'uid' not in session:
         return redirect('/')
 
@@ -393,12 +416,13 @@ def remove_product_page():
     for prod in results:
         product_list.append({'pid': prod[0], 'price': prod[1], 'description': prod[2], 'quantity': prod[3], 'name': prod[4], 'rating': prod[5]})
 
-    context = dict(prod_list = product_list)
+    context = dict(prod_list = product_list, login_name = login_name, is_admin = is_user_admin)
 
     return render_template('admin_remove_product.html', **context)
 
 @app.route('/admin/remove_product', methods=['POST'])
 def remove_product():
+
     if 'uid' not in session:
         return redirect('/')
 
@@ -441,6 +465,103 @@ def show_orders():
     login_name = logged()
     context = dict(order_list = res, login_name=login_name)
     return render_template('orders.html', **context)
+
+@app.route('/admin/add_category_page')
+def add_category_page():
+    login_name = logged()
+    is_user_admin = is_admin()
+
+    if 'uid' not in session:
+        return redirect('/')
+
+    uid = session['uid']
+    if not is_admin(uid):
+        return redirect('/')
+
+
+    context = dict(login_name = login_name, is_admin = is_user_admin)
+    return render_template('add_category_page.html', **context)
+
+@app.route('/admin/add_category', methods=['POST'])
+def add_category():
+    if 'uid' not in session:
+        return redirect('/')
+
+    uid = session['uid']
+    if not is_admin(uid):
+        return redirect('/')
+
+
+    name = request.form['name']
+    description = request.form['description']
+
+    cursor = g.conn.execute('SELECT max(cat_id) FROM category;')
+    result = list(cursor)
+    cat_id = result[0][0] + 1
+
+    cursor = g.conn.execute('INSERT INTO category VALUES (%s, %s, %s);', (cat_id, name, description))
+
+    admin_id = session['uid']
+
+    cursor = g.conn.execute('INSERT INTO categorymanagement VALUES (%s, %s);', (cat_id, admin_id))
+
+    return redirect('/admin')
+
+@app.route('/admin/remove_category_page')
+def remove_category_page():
+    login_name = logged()
+    is_user_admin = is_admin()
+
+    if 'uid' not in session:
+        return redirect('/')
+
+    uid = session['uid']
+    if not is_admin(uid):
+        return redirect('/')
+
+    cursor = g.conn.execute('SELECT * FROM category c WHERE EXISTS( SELECT * FROM belonging b WHERE c.cat_id=b.cat_id);')
+    print('Category with products')
+    categories_with_products = []
+    for result in list(cursor):
+        categories_with_products.append({'cat_id': result[0], 'name': result[1], 'description': result[2]})
+        print(result)
+
+    cursor = g.conn.execute('SELECT * FROM category c WHERE NOT EXISTS( SELECT * FROM belonging b WHERE c.cat_id=b.cat_id);')
+    print('Category without products')
+    categories_without_products = []
+    for result in list(cursor):
+        categories_without_products.append({'cat_id': result[0], 'name': result[1], 'description': result[2]})
+        print(result)
+
+
+    context = dict(login_name = login_name, is_admin = is_user_admin, categories_with_products = categories_with_products, categories_without_products = categories_without_products)
+    return render_template('remove_category_page.html', **context)
+
+
+@app.route('/admin/remove_category', methods=['POST'])
+def remove_category():
+    if 'uid' not in session:
+        return redirect('/')
+
+    uid = session['uid']
+    if not is_admin(uid):
+        return redirect('/')
+
+    cat_id = request.form['cat_id']
+
+    # Check if we are allowed to delete the category
+    cursor = g.conn.execute('SELECT EXISTS (SELECT 1 FROM category c WHERE NOT EXISTS( SELECT * FROM belonging b WHERE c.cat_id=%s and c.cat_id=b.cat_id));',(cat_id,))
+    is_exists = list(cursor)[0][0]
+
+    if not is_exists:
+        print('You are not allowed to delete category {}'.format(cat_id))
+        return redirect('/admin')
+
+
+    cursor = g.conn.execute('DELETE FROM categorymanagement WHERE cat_id=%s;', (cat_id,))
+    cursor = g.conn.execute('DELETE FROM category WHERE cat_id=%s;', (cat_id,))
+
+    return redirect('/admin')
 
 if __name__ == "__main__":
     import click

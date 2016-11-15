@@ -1,0 +1,42 @@
+{% extends "layout_template.html" %}
+<html>
+    <style>
+        body{
+            font-size: 15pt;
+            font-family: arial;
+        }
+    </style>
+
+
+    <body>
+
+        {% block top_body %}
+        {{ super() }}
+
+        <h1>Admin Page - Remove category</h1>
+        <h3>Categories without products associated with them</h3>
+        <form method="POST" action="/admin/remove_category">
+            {% for cat in categories_without_products %}
+            <div>
+                <input type="radio" name="cat_id" value="{{ cat.cat_id }}" checked><b>{{ cat.name }}</b> - {{ cat.description }}</br>
+            </div>
+            {% endfor %}
+            
+            <input type="submit" value="Remove product"></p>
+            
+
+            <h3>Categories with products associated with them</h3>
+            {% for cat in categories_with_products %}
+            <div>
+                <b>{{ cat.name }}</b> - {{ cat.description }}</br>
+            </div>
+            {% endfor %}
+
+        </form>
+
+        {% endblock %}
+
+    </body>
+
+
+</html>

@@ -76,7 +76,12 @@
                 <a href="/user_order"><button>My Orders</button></a>
                 <a href="/add_book"><button>Addresses</button></a>
                 <a href="/logout"><button>Logout</button></a>
+                {% if is_admin %}
+                    <a href="/admin"><button>Admin Page</button></a>
+                {% endif %}
+
             </div>
+
             {% else %}
             <div>
                 <a href="/login_page"><button>Login</button></a>
@@ -90,7 +95,7 @@
             {% endif %}
 
 
-        <h1>Awesome Gift Shop</h1>
+            <a href="/"><h1>Awesome Gift Shop</h1></a>
         {% endblock %}
     </body>
 </html>
