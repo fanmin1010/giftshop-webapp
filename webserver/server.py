@@ -651,8 +651,6 @@ def add_add():
     if error_msg != "":
         return render_template('address_add.html', **context)
 
-    g.conn.execute("INSERT INTO address(name, street_info, city, state, zip) VALUES (%s, %s, %s, %s, %s)", (name, street_info, city, state, add_zip))
-
     uid=session['uid']
     cmd = 'SELECT add_id FROM address WHERE name = %s AND street_info = %s and city= %s and state = %s and zip=%s'
     cursor = g.conn.execute(cmd, (name, street_info, city, state, add_zip))
