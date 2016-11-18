@@ -20,7 +20,7 @@
             <hr/>
             <div class="boxindent">
                 {% for pd in od.products %}
-                <div><a href="/product/{{ pd.pid }}">><b>{{ pd.name }}</b></a> - {{ pd.description }} Amount: {{pd.product_quantity}} Price: {{ pd.pr }}</div>
+                <div><a href="/product/{{pd.p_id}}">><b>{{ pd.name }}</b></a> - {{ pd.description }} Amount: {{pd.product_quantity}} Price: {{ pd.pr }}</div>
                 {% endfor %}
             </div>
             <hr/>
