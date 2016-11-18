@@ -650,13 +650,16 @@ def add_add():
     context = dict(login_name=login_name, name = name, street_info = street_info, city = city, state = state, error_msg = error_msg, zip = add_zip)
     if error_msg != "":
         return render_template('address_add.html', **context)
-    cursor = g.conn.execute("SELECT add_id FROM address ORDER BY add_id DESC;")
-    res = cursor.first()
-    curr_index = res['add_id']
-    add_id = int(curr_index) + 1
-    g.conn.execute("INSERT INTO address VALUES(%s, %s, %s, %s, %s, %s)", (add_id, name, street_info, city, state, add_zip))
+
+    g.conn.execute("INSERT INTO address(name, street_info, city, state, zip) VALUES (%s, %s, %s, %s, %s)", (name, street_info, city, state, add_zip))
+
     uid=session['uid']
-    g.conn.execute("INSERT INTO addressMaintenance VALUES(%s, %s)", (add_id, uid))
+    cmd = 'SELECT add_id FROM address WHERE name = %s AND street_info = %s and city= %s and state = %s and zip=%s'
+    cursor = g.conn.execute(cmd, (name, street_info, city, state, add_zip))
+    add_id = list(cursor)[0][0]
+    cursor = g.conn.execute('SELECT 1 FROM addressmaintenance WHERE cid = %s and add_id = %s', (uid, add_id))
+    if len(list(cursor)) == 0:
+        g.conn.execute('INSERT INTO addressmaintenance(cid, add_id) VALUES (%s, %s)', (uid, add_id))
     return redirect('/add_book')
 
 @app.route('/add_delete/<add_id>')
